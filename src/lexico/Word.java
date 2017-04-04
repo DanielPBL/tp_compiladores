@@ -20,10 +20,10 @@ public class Word extends Token {
     public static final Word
             AND = new Word("and", Tag.AND),
             OR = new Word("or", Tag.OR),
-            EQ = new Word(":=", Tag.ATRIB),
-            NE = new Word(">=", Tag.GTE),
-            LE = new Word("<=", Tag.LTE),
-            GE = new Word("<>", Tag.DIFF);
+            ATRIB = new Word(":=", Tag.ATRIB),
+            GTE = new Word(">=", Tag.GTE),
+            LTE = new Word("<=", Tag.LTE),
+            DIFF = new Word("<>", Tag.DIFF);
 
     public Word(String lexema, int tag) {
         super(tag);

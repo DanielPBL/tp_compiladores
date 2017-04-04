@@ -68,7 +68,7 @@ public class Lexer {
         this.reserve(new Word("and", Tag.AND));
     }
 
-    public Token scan() throws IOException {
+    public Token scan() throws IOException, Exception {
         //Desconsidera delimitadores na entrada
         OUTTER:
         while (true) {
@@ -109,6 +109,64 @@ public class Lexer {
             return this.scan();
         }
 
+        //Operadores
+        switch (this.ch) {
+            case ':':
+                if (this.readch('=')) {
+                    return Word.ATRIB;
+                } else {
+                    return new Token(':');
+                }
+            case '>':
+                if (this.readch('=')) {
+                    return Word.GTE;
+                } else {
+                    return new Token('>');
+                }
+            case '<':
+                if (this.readch('=')) {
+                    return Word.LTE;
+                } else if (this.ch == '>') {
+                    return Word.DIFF;
+                } else {
+                    return new Token('<');
+                }
+        }
+
+        //Constantes inteiras
+        if (Character.isDigit(this.ch)) {
+            if (this.ch == '0') {
+                return new Num(0);
+            }
+
+            int value = 0;
+            do {
+                value = 10 * value + Character.digit(this.ch, 10);
+                this.readch();
+            } while (Character.isDigit(this.ch));
+
+            return new Num(value);
+        }
+
+        //Literais
+        if (this.ch == '"') {
+            String literal = "olá";
+
+            this.readch();
+            while (this.ch != '\n' && this.ch != '"') {
+                literal += this.ch;
+                this.readch();
+            }
+
+            if (this.ch == '"') { //Tudo certo, literal fechado corretamente
+                this.ch = ' ';
+                return new Word(literal, Tag.STRING);
+            } else {
+                throw new Exception("Literal não terminado");
+            }
+        }
+
+        //Identificadores
         Token t = new Token(this.ch);
         this.ch = ' ';
         return t;
