@@ -23,14 +23,20 @@ public class Lexer {
     private HashMap<String, Token> words = new HashMap<>();
 
     private void reserve(Word w) {
-        this.words.put(w.getLexeme(), w);
+        this.words.put(w.getLexeme().toLowerCase(), w);
     }
 
-    private void readch() throws IOException {
-        ch = (char) this.file.read();
+    private void readch() throws IOException, LexicalException {
+        int read = this.file.read();
+
+        if (read == -1) {
+            throw new LexicalException(Lexer.line, new Token(Tag.EOF));
+        }
+
+        this.ch = (char) read;
     }
 
-    private boolean readch(char c) throws IOException {
+    private boolean readch(char c) throws IOException, LexicalException {
         this.readch();
 
         if (this.ch != c) {
@@ -68,107 +74,155 @@ public class Lexer {
         this.reserve(new Word("and", Tag.AND));
     }
 
-    public Token scan() throws IOException, Exception {
-        //Desconsidera delimitadores na entrada
-        OUTTER:
-        while (true) {
-            this.readch();
-            switch (this.ch) {
-                case ' ':
-                case '\t':
-                case '\r':
-                case '\b':
-                    continue;
-                case '\n':
-                    Lexer.line++;
-                default:
-                    break OUTTER;
-            }
-        }
-
-        //Desconsidera comentários de uma linha
-        if (this.ch == '/') {
-            if (this.readch('/')) {
-                //Ignora tudo até encontrar o \n
-                while (this.ch != '\n') {
-                    this.readch();
+    public Token scan() throws IOException, LexicalException {
+        try {
+            //Desconsidera delimitadores na entrada
+            OUTTER:
+            while (true) {
+                switch (this.ch) {
+                    case ' ':
+                    case '\t':
+                    case '\r':
+                    case '\b':
+                        this.readch();
+                        break;
+                    case '\n':
+                        Lexer.line++;
+                        this.readch();
+                        break;
+                    default:
+                        break OUTTER;
                 }
-                Lexer.line++;
+            }
+
+            //Desconsidera comentários de uma linha
+            if (this.ch == '/') {
+                if (this.readch('/')) {
+                    //Ignora tudo até encontrar o \n
+                    while (this.ch != '\n') {
+                        this.readch();
+                    }
+                    
+                    return this.scan();
+                } else {
+                    return new Token('/');
+                }
+            }
+
+            //Desconsidera blocos de comentários
+            if (this.ch == '{') {
+                do {
+                    this.readch();
+                    if (this.ch == '\n') {
+                        Lexer.line++;
+                    }
+                } while (this.ch != '}');
+                this.ch = ' ';
+                
                 return this.scan();
             }
-        }
 
-        //Desconsidera blocos de comentários
-        if (this.ch == '{') {
-            do {
-                this.readch();
-                if (this.ch == '\n') {
-                    Lexer.line++;
-                }
-            } while (this.ch != '}');
-            return this.scan();
-        }
-
-        //Operadores
-        switch (this.ch) {
-            case ':':
-                if (this.readch('=')) {
-                    return Word.ATRIB;
-                } else {
-                    return new Token(':');
-                }
-            case '>':
-                if (this.readch('=')) {
-                    return Word.GTE;
-                } else {
-                    return new Token('>');
-                }
-            case '<':
-                if (this.readch('=')) {
-                    return Word.LTE;
-                } else if (this.ch == '>') {
-                    return Word.DIFF;
-                } else {
-                    return new Token('<');
-                }
-        }
-
-        //Constantes inteiras
-        if (Character.isDigit(this.ch)) {
-            if (this.ch == '0') {
-                return new Num(0);
+            //Operadores
+            switch (this.ch) {
+                case ':':
+                    if (this.readch('=')) {
+                        return Word.ATRIB;
+                    } else {
+                        return new Token(':');
+                    }
+                case '>':
+                    if (this.readch('=')) {
+                        return Word.GTE;
+                    } else {
+                        return new Token('>');
+                    }
+                case '<':
+                    if (this.readch('=')) {
+                        return Word.LTE;
+                    } else if (this.ch == '>') {
+                        return Word.DIFF;
+                    } else {
+                        return new Token('<');
+                    }
             }
 
-            int value = 0;
-            do {
-                value = 10 * value + Character.digit(this.ch, 10);
-                this.readch();
-            } while (Character.isDigit(this.ch));
+            //Constantes inteiras
+            if (Character.isDigit(this.ch)) {
+                if (this.ch == '0') {
+                    this.ch = ' ';
+                    
+                    return new Num(0);
+                }
 
-            return new Num(value);
-        }
+                int value = 0;
+                do {
+                    value = 10 * value + Character.digit(this.ch, 10);
+                    this.readch();
+                } while (Character.isDigit(this.ch));
 
-        //Literais
-        if (this.ch == '"') {
-            String literal = "olá";
-
-            this.readch();
-            while (this.ch != '\n' && this.ch != '"') {
-                literal += this.ch;
-                this.readch();
+                return new Num(value);
             }
 
-            if (this.ch == '"') { //Tudo certo, literal fechado corretamente
-                this.ch = ' ';
-                return new Word(literal, Tag.STRING);
+            //Literais
+            if (this.ch == '"') {
+                String literal = "";
+
+                this.readch();
+                while (this.ch != '\n' && this.ch != '"') {
+                    literal += this.ch;
+                    this.readch();
+                }
+
+                if (this.ch == '"') { //Tudo certo, literal fechado corretamente
+                    this.ch = ' ';
+                    return new Word(literal, Tag.STRING);
+                } else {
+                    throw new LexicalException(Lexer.line, new Word("Literal não terminado", 0));
+                }
+            }
+
+            //Identificadores
+            if (Character.isLetter(this.ch)) {
+                String id = "";
+
+                do {
+                    id += ch;
+                    this.readch();
+                } while (Character.isLetterOrDigit(this.ch) || this.ch == '_');
+
+                Word word = (Word) words.get(id.toLowerCase());
+
+                if (word != null) {
+                    return word;
+                }
+
+                word = new Word(id, Tag.ID);
+                this.reserve(word);
+                return word;
+            }
+        } catch (LexicalException le) {
+            if (le.getToken().tag == Tag.EOF) {
+                return le.getToken();
             } else {
-                throw new Exception("Literal não terminado");
+                throw le;
             }
         }
 
-        //Identificadores
-        Token t = new Token(this.ch);
-        this.ch = ' ';
-        return t;
+        switch (this.ch) {
+            case ';':
+            case '(':
+            case ')':
+            case '=':
+            case '-':
+            case '+':
+            case '*':
+            case ',':
+            case '_':
+                Token t = new Token(this.ch);
+                this.ch = ' ';
+                return t;
+            default:
+                throw new LexicalException(Lexer.line, new Word("" + this.ch, Tag.INV));
+        }
     }
 }

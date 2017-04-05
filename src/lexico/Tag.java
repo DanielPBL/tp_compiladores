@@ -36,5 +36,9 @@ public class Tag {
             // Outros tokens
             NUM = 276,
             ID = 277,
-            STRING = 278;
+            STRING = 278,
+            //Erros
+            INV = -1,
+            UNP = -2,
+            EOF = -3;
 }
