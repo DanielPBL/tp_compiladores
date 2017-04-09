@@ -1,8 +1,3 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package compilador;
 
 import java.io.FileNotFoundException;
@@ -11,10 +6,6 @@ import lexico.Lexer;
 import lexico.Tag;
 import lexico.Token;
 
-/**
- *
- * @author desenv00
- */
 public class Compilador {
 
     /**
@@ -26,12 +17,12 @@ public class Compilador {
             System.exit(1);
         }
 
-        Lexer lexer = null;
+        Lexer lexer;
 
         try {
             lexer = new Lexer(args[0]);
         } catch (FileNotFoundException e) {
-            System.exit(1);
+            return;
         }
 
         try {

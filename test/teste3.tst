@@ -1,5 +1,5 @@
 { Programa de Teste
-Calculo de idade 
+Calculo de idade } 
 init
  cont_ is int;
  media, idade, soma_ is integer;

@@ -1,14 +1,5 @@
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
 package lexico;
 
-/**
- *
- * @author desenv00
- */
 public class Tag {
 
     public final static int //Palavras reservadas
@@ -41,4 +32,87 @@ public class Tag {
             INV = -1,
             UNP = -2,
             EOF = -3;
+
+    public static String getName(int token) {
+        String str = "";
+
+        switch (token) {
+            case INIT:
+                str = "INIT";
+                break;
+            case STOP:
+                str = "STOP";
+                break;
+            case IS:
+                str = "IS";
+                break;
+            case T_INTEGER:
+                str = "T_INTEGER";
+                break;
+            case T_STRING:
+                str = "T_STRING";
+                break;
+            case IF:
+                str = "IF";
+                break;
+            case BEGIN:
+                str = "BEGIN";
+                break;
+            case END:
+                str = "END";
+                break;
+            case ELSE:
+                str = "ELSE";
+                break;
+            case DO:
+                str = "DO";
+                break;
+            case WHILE:
+                str = "WHILE";
+                break;
+            case READ:
+                str = "READ";
+                break;
+            case WRITE:
+                str = "WRITE";
+                break;
+            case NOT:
+                str = "NOT";
+                break;
+            case OR:
+                str = "OR";
+                break;
+            case AND:
+                str = "AND";
+                break;
+            case ATRIB:
+                str = "ATRIB";
+                break;
+            case GTE:
+                str = "GTE";
+                break;
+            case LTE:
+                str = "LTE";
+                break;
+            case DIFF:
+                str = "DIFF";
+                break;
+            case NUM:
+                str = "NUM";
+                break;
+            case ID:
+                str = "ID";
+                break;
+            case STRING:
+                str = "STRING";
+                break;
+            case EOF:
+                str = "EOF";
+                break;
+            default:
+                str += (char) token;
+        }
+
+        return str;
+    }
 }
