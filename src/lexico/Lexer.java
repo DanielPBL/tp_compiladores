@@ -4,8 +4,6 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
 
 public class Lexer {
 
@@ -41,13 +39,9 @@ public class Lexer {
     }
 
     public void printTable() {
-        Iterator iterator = this.words.entrySet().iterator();
-
-        while (iterator.hasNext()) {
-            Map.Entry pair = (Map.Entry<String, Word>) iterator.next();
-            System.out.printf("%s = %s\n", pair.getKey(), pair.getValue());
-            iterator.remove();
-        }
+        this.words.entrySet().forEach((cursor) -> {
+            System.out.printf("%s = %s\n", cursor.getKey(), cursor.getValue());
+        });
     }
 
     public Lexer(String fileName) throws FileNotFoundException {
