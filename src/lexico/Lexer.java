@@ -42,7 +42,7 @@ public class Lexer {
         try {
             this.file = new FileReader(fileName);
         } catch (FileNotFoundException e) {
-            System.out.println("Arquivo não encontrado.");
+            System.out.printf("Arquivo '%s' não encontrado.\n", fileName);
             throw e;
         }
 
