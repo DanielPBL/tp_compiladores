@@ -38,6 +38,9 @@ public class Compilador {
             System.out.println(e.getMessage());
         }
 
+        System.out.println("Tabela de Símbolos:");
+        lexer.printTable();
+
     }
 
 }

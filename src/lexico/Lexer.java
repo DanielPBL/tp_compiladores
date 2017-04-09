@@ -4,6 +4,8 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 public class Lexer {
 
@@ -11,7 +13,7 @@ public class Lexer {
     private char ch = ' ';
     private FileReader file;
 
-    private HashMap<String, Token> words = new HashMap<>();
+    public HashMap<String, Token> words = new HashMap<>();
 
     private void reserve(Word w) {
         this.words.put(w.getLexeme().toLowerCase(), w);
@@ -36,6 +38,16 @@ public class Lexer {
 
         this.ch = ' ';
         return true;
+    }
+
+    public void printTable() {
+        Iterator iterator = this.words.entrySet().iterator();
+
+        while (iterator.hasNext()) {
+            Map.Entry pair = (Map.Entry<String, Word>) iterator.next();
+            System.out.printf("%s = %s\n", pair.getKey(), pair.getValue());
+            iterator.remove();
+        }
     }
 
     public Lexer(String fileName) throws FileNotFoundException {
@@ -93,7 +105,7 @@ public class Lexer {
                     while (this.ch != '\n') {
                         this.readch();
                     }
-                    
+
                     return this.scan();
                 } else {
                     return new Token('/');
@@ -109,7 +121,7 @@ public class Lexer {
                     }
                 } while (this.ch != '}');
                 this.ch = ' ';
-                
+
                 return this.scan();
             }
 
@@ -141,7 +153,7 @@ public class Lexer {
             if (Character.isDigit(this.ch)) {
                 if (this.ch == '0') {
                     this.ch = ' ';
-                    
+
                     return new Num(0);
                 }
 
