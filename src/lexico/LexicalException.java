@@ -22,11 +22,6 @@ public class LexicalException extends CompilationException {
             case Tag.INV:
                 this.msg = "Token inválido '" + ((Word) token).getLexeme() + "'";
                 break;
-            /*
-            case Tag.UNP:
-                this.msg = "Token inesperado '" + ((Word) token).getLexeme() + "'";
-                break;
-             */
             case Tag.EOF:
                 this.msg = "Fim de arquivo inesperado";
                 break;

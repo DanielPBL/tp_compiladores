@@ -3,6 +3,7 @@ package compilador;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import lexico.Lexer;
+import lexico.LexicalException;
 import lexico.Tag;
 import lexico.Token;
 
@@ -29,16 +30,19 @@ public class Compilador {
             Token token;
 
             do {
-                token = lexer.scan();
-                System.out.println(token);
+                try {
+                    token = lexer.scan();
+                    System.out.println(token);
+                } catch (LexicalException e) {
+                    token = e.getToken();
+                    e.printError();
+                } 
             } while (token.tag != Tag.EOF);
-        } catch (CompilationException e) {
-            e.printError();
         } catch (IOException e) {
             System.out.println(e.getMessage());
         }
 
-        System.out.println("Tabela de Símbolos:");
+        System.out.println("\nTabela de Símbolos:");
         lexer.printTable();
 
     }

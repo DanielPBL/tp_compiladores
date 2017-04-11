@@ -219,7 +219,9 @@ public class Lexer {
                 this.ch = ' ';
                 return t;
             default:
-                throw new LexicalException(Lexer.line, new Word("" + this.ch, Tag.INV));
+                char chr = this.ch;
+                this.ch = ' ';
+                throw new LexicalException(Lexer.line, new Word("" + chr, Tag.INV));
         }
     }
 }
