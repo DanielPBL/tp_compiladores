@@ -1,6 +1,16 @@
 init
- 	a,b,c is integer;
-        if ( a>b and a>c )
-        else
-            write("a<b /" and /"a<c");
-        
+ 	a is int;
+
+	begin
+		read (A);
+
+		DO
+			A := A - 2
+		WHiLE (A >= 2);
+
+		iF (a = 0)
+			write (A);
+			write (" é par");
+		ELSE
+			write (A);
+			write (" é ímpar.");
