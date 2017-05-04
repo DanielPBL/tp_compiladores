@@ -124,9 +124,8 @@ public class Lexer {
                 case ':':
                     if (this.readch('=')) {
                         return Word.ATRIB;
-                    } else {
-                        return new Token(':');
                     }
+                    break;
                 case '>':
                     if (this.readch('=')) {
                         return Word.GTE;
