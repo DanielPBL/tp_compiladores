@@ -1,0 +1,45 @@
+program' ::= program $
+program ::= init decl-stmt-list stop
+decl-stmt-list := id z1 ";" stmt-list-tail
+ | z2 ";" stmt-list-tail
+z1 ::= ":=" simple-expr 
+ | ident-list-tail is type ";" decl-list-tail
+z2 ::= if-stmt | do-stmt
+ | read-stmt | write-stmt
+decl-list-tail ::= decl ";" decl-list-tail
+ | λ
+decl ::= ident-list is type
+ident-list ::= id ident-list-tail
+ident-list-tail ::= "," id ident-list-tail
+ | λ
+type ::= integer | string
+stmt-list ::= stmt ";" stmt-list-tail
+stmt-list-tail ::= stmt ";" stmt-list-tail
+ | λ
+stmt ::= assign-stmt | if-stmt | do-stmt
+ | read-stmt | write-stmt
+assign-stmt ::= id ":=" simple_expr
+if-stmt ::= if "(" condition ")" begin stmt-list end if-suffix
+if-suffix ::= else begin stmt-list end
+ | λ
+condition ::= expression
+do-stmt ::= do stmt-list do-suffix
+do-suffix ::= while "(" condition ")"
+read-stmt ::= read "(" id ")"
+write-stmt ::= write "(" writable ")"
+writable ::= simple-expr
+expression ::= simple-expr expression-suffix
+expression-suffix ::= relop simple-expr
+ | λ
+simple-expr ::= term simple-expr-tail 
+simple-expr-tail ::= addop term simple-expr-tail
+ | λ
+term ::= factor-a term-tail 
+term-tail ::= mulop factor-a term-tail
+ | λ
+factor-a ::= factor | not factor | "-" factor
+factor ::= id | constant | "(" expression ")"
+relop ::= "=" | ">" | ">=" | "<" | "<=" | "<>"
+addop ::= "+" | "-" | or
+mulop ::= "*" | "/" | and
+constant ::= integer_const | literal

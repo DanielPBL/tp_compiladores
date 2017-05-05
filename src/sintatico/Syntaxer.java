@@ -43,66 +43,51 @@ public class Syntaxer {
 
     public void program() {
         this.eat(Tag.INIT);
-        this.programSuffix();
+        this.declStmtList();
         this.eat(Tag.EOF);
     }
-
-    public void programSuffix() {
+    
+    public void declStmtList() {
         switch (this.token.tag) {
             case Tag.ID:
                 this.eat(Tag.ID);
-                this.declAssign();
-                this.eat(Tag.STOP);
+                this.z1();
+                this.eat(';');
+                this.stmtListTail();
                 break;
             case Tag.IF:
             case Tag.DO:
             case Tag.READ:
             case Tag.WRITE:
-                this.otherStmt();
-                this.eat(Tag.STOP);
+                this.z2();
+                this.eat(';');
+                this.stmtListTail();
                 break;
             default:
                 this.error();
         }
     }
-
-    public void declAssign() {
+    
+    public void z1() {
         switch (this.token.tag) {
             case Tag.ATRIB:
                 this.eat(Tag.ATRIB);
                 this.simpleExpr();
-                this.eat(';');
-                this.stmtListTail();
                 break;
             case ',':
-                this.identList();
+            case Tag.IS:
+                this.identListTail();
                 this.eat(Tag.IS);
                 this.type();
                 this.eat(';');
-                this.declList();
-                this.stmtList();
+                this.declListTail();
                 break;
             default:
                 this.error();
         }
     }
 
-    public void otherStmt() {
-        switch (this.token.tag) {
-            case Tag.IF:
-            case Tag.DO:
-            case Tag.READ:
-            case Tag.WRITE:
-                this.stmtPrime();
-                this.eat(';');
-                this.stmtListTail();
-                break;
-            default:
-                this.error();
-        }
-    }
-
-    public void stmtPrime() {
+    public void z2() {
         switch (this.token.tag) {
             case Tag.IF:
                 this.ifStmt();
@@ -121,16 +106,26 @@ public class Syntaxer {
         }
     }
 
-    public void declList() {
+    public void declListTail() {
         switch (this.token.tag) {
             case Tag.ID:
-                this.declAssign();
+                this.decl();
+                this.eat(';');
+                this.declListTail();
                 break;
-            case Tag.IF:
-            case Tag.DO:
-            case Tag.READ:
-            case Tag.WRITE:
-                this.otherStmt();
+            case ';':
+                break;
+            default:
+                this.error();
+        }
+    }
+
+    public void decl() {
+        switch (this.token.tag) {
+            case Tag.ID:
+                this.identList();
+                this.eat(Tag.IS);
+                this.type();
                 break;
             default:
                 this.error();
@@ -139,10 +134,21 @@ public class Syntaxer {
 
     public void identList() {
         switch (this.token.tag) {
+            case Tag.ID:
+                this.eat(Tag.ID);
+                this.identListTail();
+                break;
+            default:
+                this.error();
+        }
+    }
+
+    public void identListTail() {
+        switch (this.token.tag) {
             case ',':
                 this.eat(',');
                 this.eat(Tag.ID);
-                this.identList();
+                this.identListTail();
                 break;
             case Tag.IS:
                 break;
@@ -285,7 +291,7 @@ public class Syntaxer {
         switch (this.token.tag) {
             case Tag.DO:
                 this.eat(Tag.DO);
-                this.stmt();
+                this.stmtList();
                 this.doSuffix();
                 break;
             default:
@@ -324,7 +330,7 @@ public class Syntaxer {
             case Tag.WRITE:
                 this.eat(Tag.WRITE);
                 this.eat('(');
-                this.writeble();
+                this.writable();
                 this.eat(')');
                 break;
             default:
@@ -332,7 +338,7 @@ public class Syntaxer {
         }
     }
 
-    public void writeble() {
+    public void writable() {
         switch (this.token.tag) {
             case Tag.ID:
             case Tag.NUM:
@@ -390,21 +396,21 @@ public class Syntaxer {
             case Tag.NOT:
             case '-':
                 this.term();
-                this.simpleExprPrime();
+                this.simpleExprTail();
                 break;
             default:
                 this.error();
         }
     }
 
-    public void simpleExprPrime() {
+    public void simpleExprTail() {
         switch (this.token.tag) {
             case '+':
             case '-':
             case Tag.OR:
                 this.addOp();
                 this.term();
-                this.simpleExprPrime();
+                this.simpleExprTail();
                 break;
             case ';':
             case ')':
@@ -429,20 +435,21 @@ public class Syntaxer {
             case Tag.NOT:
             case '-':
                 this.factorA();
-                this.termPrime();
+                this.termTail();
                 break;
             default:
                 this.error();
         }
     }
 
-    public void termPrime() {
+    public void termTail() {
         switch (this.token.tag) {
             case '*':
             case '/':
             case Tag.AND:
                 this.mulOp();
                 this.factorA();
+                this.termTail();
                 break;
             case '+':
             case '-':
