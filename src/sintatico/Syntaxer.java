@@ -443,9 +443,18 @@ public class Syntaxer {
             case Tag.AND:
                 this.mulOp();
                 this.factorA();
+                break;
             case '+':
             case '-':
             case Tag.OR:
+            case ';':
+            case ')':
+            case '>':
+            case '=':
+            case Tag.GTE:
+            case '<':
+            case Tag.LTE:
+            case Tag.DIFF:
                 break;
             default:
                 this.error();
@@ -459,9 +468,11 @@ public class Syntaxer {
             case Tag.STRING:
             case '(':
                 this.factor();
+                break;
             case Tag.NOT:
                 this.eat(Tag.NOT);
                 this.factor();
+                break;
             case '-':
                 this.eat('-');
                 this.factor();
