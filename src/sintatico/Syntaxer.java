@@ -44,6 +44,7 @@ public class Syntaxer {
     public void program() {
         this.eat(Tag.INIT);
         this.declStmtList();
+        this.eat(Tag.STOP);
         this.eat(Tag.EOF);
     }
     
@@ -52,8 +53,6 @@ public class Syntaxer {
             case Tag.ID:
                 this.eat(Tag.ID);
                 this.z1();
-                this.eat(';');
-                this.stmtListTail();
                 break;
             case Tag.IF:
             case Tag.DO:
@@ -73,6 +72,8 @@ public class Syntaxer {
             case Tag.ATRIB:
                 this.eat(Tag.ATRIB);
                 this.simpleExpr();
+                this.eat(';');
+                this.stmtListTail();
                 break;
             case ',':
             case Tag.IS:
@@ -80,7 +81,7 @@ public class Syntaxer {
                 this.eat(Tag.IS);
                 this.type();
                 this.eat(';');
-                this.declListTail();
+                this.declStmtListTail();
                 break;
             default:
                 this.error();
@@ -106,37 +107,18 @@ public class Syntaxer {
         }
     }
 
-    public void declListTail() {
+    public void declStmtListTail() {
         switch (this.token.tag) {
             case Tag.ID:
-                this.decl();
-                this.eat(';');
-                this.declListTail();
+            case Tag.IF:
+            case Tag.DO:
+            case Tag.READ:
+            case Tag.WRITE:
+                this.declStmtList();
                 break;
-            case ';':
-                break;
-            default:
-                this.error();
-        }
-    }
-
-    public void decl() {
-        switch (this.token.tag) {
-            case Tag.ID:
-                this.identList();
-                this.eat(Tag.IS);
-                this.type();
-                break;
-            default:
-                this.error();
-        }
-    }
-
-    public void identList() {
-        switch (this.token.tag) {
-            case Tag.ID:
-                this.eat(Tag.ID);
-                this.identListTail();
+            case Tag.ATRIB:
+            case ',':
+            case Tag.IS:
                 break;
             default:
                 this.error();
@@ -496,6 +478,9 @@ public class Syntaxer {
                 break;
             case Tag.NUM:
                 this.eat(Tag.NUM);
+                break;
+            case Tag.STRING:
+                this.eat(Tag.STRING);
                 break;
             case '(':
                 this.eat('(');

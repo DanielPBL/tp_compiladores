@@ -1,15 +1,13 @@
 program' ::= program $
 program ::= init decl-stmt-list stop
-decl-stmt-list := id z1 ";" stmt-list-tail
+decl-stmt-list := id z1
  | z2 ";" stmt-list-tail
-z1 ::= ":=" simple-expr 
- | ident-list-tail is type ";" decl-list-tail
+z1 ::= ":=" simple-expr ";" stmt-list-tail
+ | ident-list-tail is type ";" decl-stmt-list-tail
 z2 ::= if-stmt | do-stmt
  | read-stmt | write-stmt
-decl-list-tail ::= decl ";" decl-list-tail
+decl-stmt-list-tail ::= decl-stmt-list
  | λ
-decl ::= ident-list is type
-ident-list ::= id ident-list-tail
 ident-list-tail ::= "," id ident-list-tail
  | λ
 type ::= integer | string
