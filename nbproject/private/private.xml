@@ -5,7 +5,9 @@
         <group>
             <file>file:/C:/Users/danie/Documents/GitHub/tp_compiladores/src/sintatico/Syntaxer.java</file>
             <file>file:/C:/Users/danie/Documents/GitHub/tp_compiladores/src/lexico/Lexer.java</file>
-            <file>file:/C:/Users/danie/Documents/GitHub/tp_compiladores/src/compilador/Compilador.java</file>
+            <file>file:/C:/Users/danie/Documents/GitHub/tp_compiladores/src/lexico/Tag.java</file>
+            <file>file:/C:/Users/danie/Documents/GitHub/tp_compiladores/src/sintatico/SyntaticException.java</file>
+            <file>file:/C:/Users/danie/Documents/GitHub/tp_compiladores/src/lexico/Token.java</file>
         </group>
     </open-files>
 </project-private>

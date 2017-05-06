@@ -10,6 +10,8 @@ public class Syntaxer {
 
     private final Lexer lexer;
     private Token token;
+    
+    public boolean success = true;
 
     public Syntaxer(Lexer lexer) {
         this.lexer = lexer;
@@ -22,6 +24,7 @@ public class Syntaxer {
         } catch (LexicalException e) {
             token = e.getToken();
             e.printError();
+            this.success = false;
             this.advance();
         } catch (IOException e) {
         }
@@ -31,23 +34,47 @@ public class Syntaxer {
         if (this.token.tag == tag) {
             this.advance();
         } else {
-            this.error();
+            int[] expected = {tag};
+            this.skipTo(expected, expected);
+            this.advance();
         }
     }
 
-    private void error() {
-        SyntaticException se = new SyntaticException(Lexer.line, this.token, null);
+    private boolean contains(Token token, int[] follow) {
+        for (int tag : follow) {
+            if (tag == token.tag) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void skipTo(int[] expected, int[] follow) {
+        SyntaticException se = new SyntaticException(Lexer.line, this.token, expected);
         se.printError();
-        System.exit(1);
+        this.success = false;
+
+        do {
+            this.advance();
+        } while (!this.contains(this.token, follow) && this.token.tag != Tag.EOF);
     }
 
     public void program() {
-        this.eat(Tag.INIT);
-        this.declStmtList();
-        this.eat(Tag.STOP);
-        this.eat(Tag.EOF);
+        switch (this.token.tag) {
+            case Tag.INIT:
+                this.eat(Tag.INIT);
+                this.declStmtList();
+                this.eat(Tag.STOP);
+                this.eat(Tag.EOF);
+                break;
+            default:
+                int[] expected = {Tag.INIT};
+                int[] follow = {Tag.EOF};
+                this.skipTo(expected, follow);
+        }
     }
-    
+
     public void declStmtList() {
         switch (this.token.tag) {
             case Tag.ID:
@@ -63,10 +90,12 @@ public class Syntaxer {
                 this.stmtListTail();
                 break;
             default:
-                this.error();
+                int[] expected = {Tag.ID, Tag.IF, Tag.DO, Tag.READ, Tag.WRITE};
+                int[] follow = {Tag.STOP};
+                this.skipTo(expected, follow);
         }
     }
-    
+
     public void z1() {
         switch (this.token.tag) {
             case Tag.ATRIB:
@@ -84,7 +113,9 @@ public class Syntaxer {
                 this.declStmtListTail();
                 break;
             default:
-                this.error();
+                int[] expected = {Tag.ATRIB, ',', Tag.IS};
+                int[] follow = {Tag.STOP};
+                this.skipTo(expected, follow);
         }
     }
 
@@ -103,7 +134,9 @@ public class Syntaxer {
                 this.writeStmt();
                 break;
             default:
-                this.error();
+                int[] expected = {Tag.IF, Tag.DO, Tag.READ, Tag.WRITE, Tag.STOP};
+                int[] follow = {';'};
+                this.skipTo(expected, follow);
         }
     }
 
@@ -116,12 +149,12 @@ public class Syntaxer {
             case Tag.WRITE:
                 this.declStmtList();
                 break;
-            case Tag.ATRIB:
-            case ',':
-            case Tag.IS:
+            case Tag.STOP:
                 break;
             default:
-                this.error();
+                int[] expected = {Tag.ID, Tag.IF, Tag.DO, Tag.READ, Tag.WRITE};
+                int[] follow = {Tag.STOP};
+                this.skipTo(expected, follow);
         }
     }
 
@@ -135,7 +168,9 @@ public class Syntaxer {
             case Tag.IS:
                 break;
             default:
-                this.error();
+                int[] expected = {',', Tag.IS};
+                int[] follow = {Tag.IS};
+                this.skipTo(expected, follow);
         }
     }
 
@@ -148,7 +183,9 @@ public class Syntaxer {
                 this.eat(Tag.T_STRING);
                 break;
             default:
-                this.error();
+                int[] expected = {Tag.T_INTEGER, Tag.T_STRING};
+                int[] follow = {';'};
+                this.skipTo(expected, follow);
         }
     }
 
@@ -164,7 +201,9 @@ public class Syntaxer {
                 this.stmtListTail();
                 break;
             default:
-                this.error();
+                int[] expected = {Tag.ID, Tag.IF, Tag.DO, Tag.READ, Tag.WRITE};
+                int[] follow = {Tag.END, Tag.WHILE};
+                this.skipTo(expected, follow);
         }
     }
 
@@ -184,7 +223,9 @@ public class Syntaxer {
             case Tag.STOP:
                 break;
             default:
-                this.error();
+                int[] expected = {Tag.ID, Tag.IF, Tag.DO, Tag.READ, Tag.WRITE, Tag.END, Tag.WHILE, Tag.STOP};
+                int[] follow = {Tag.END, Tag.STOP, Tag.WHILE};
+                this.skipTo(expected, follow);
         }
     }
 
@@ -206,7 +247,9 @@ public class Syntaxer {
                 this.writeStmt();
                 break;
             default:
-                this.error();
+                int[] expected = {Tag.ID, Tag.IF, Tag.DO, Tag.READ, Tag.WRITE};
+                int[] follow = {';'};
+                this.skipTo(expected, follow);
         }
     }
 
@@ -218,7 +261,9 @@ public class Syntaxer {
                 this.simpleExpr();
                 break;
             default:
-                this.error();
+                int[] expected = {Tag.ID};
+                int[] follow = {';'};
+                this.skipTo(expected, follow);
         }
     }
 
@@ -235,7 +280,9 @@ public class Syntaxer {
                 this.ifSuffix();
                 break;
             default:
-                this.error();
+                int[] expected = {Tag.IF};
+                int[] follow = {';'};
+                this.skipTo(expected, follow);
         }
     }
 
@@ -250,7 +297,9 @@ public class Syntaxer {
             case ';':
                 break;
             default:
-                this.error();
+                int[] expected = {Tag.ELSE, ';'};
+                int[] follow = {';'};
+                this.skipTo(expected, follow);
         }
     }
 
@@ -265,7 +314,9 @@ public class Syntaxer {
                 this.expression();
                 break;
             default:
-                this.error();
+                int[] expected = {Tag.ID, Tag.NUM, Tag.STRING, '(', Tag.NOT, '-'};
+                int[] follow = {')'};
+                this.skipTo(expected, follow);
         }
     }
 
@@ -277,7 +328,9 @@ public class Syntaxer {
                 this.doSuffix();
                 break;
             default:
-                this.error();
+                int[] expected = {Tag.DO};
+                int[] follow = {';'};
+                this.skipTo(expected, follow);
         }
     }
 
@@ -290,7 +343,9 @@ public class Syntaxer {
                 this.eat(')');
                 break;
             default:
-                this.error();
+                int[] expected = {Tag.WHILE};
+                int[] follow = {';'};
+                this.skipTo(expected, follow);
         }
     }
 
@@ -303,7 +358,9 @@ public class Syntaxer {
                 this.eat(')');
                 break;
             default:
-                this.error();
+                int[] expected = {Tag.READ};
+                int[] follow = {';'};
+                this.skipTo(expected, follow);
         }
     }
 
@@ -316,7 +373,9 @@ public class Syntaxer {
                 this.eat(')');
                 break;
             default:
-                this.error();
+                int[] expected = {Tag.WRITE};
+                int[] follow = {';'};
+                this.skipTo(expected, follow);
         }
     }
 
@@ -331,7 +390,9 @@ public class Syntaxer {
                 this.simpleExpr();
                 break;
             default:
-                this.error();
+                int[] expected = {Tag.ID, Tag.NUM, Tag.STRING, '(', Tag.NOT, '-'};
+                int[] follow = {')'};
+                this.skipTo(expected, follow);
         }
     }
 
@@ -347,7 +408,9 @@ public class Syntaxer {
                 this.expressionSuffix();
                 break;
             default:
-                this.error();
+                int[] expected = {Tag.ID, Tag.NUM, Tag.STRING, '(', Tag.NOT, '-'};
+                int[] follow = {')'};
+                this.skipTo(expected, follow);
         }
     }
 
@@ -365,7 +428,9 @@ public class Syntaxer {
             case ')':
                 break;
             default:
-                this.error();
+                int[] expected = {'>', '=', Tag.GTE, '<', Tag.LTE, Tag.DIFF, ')'};
+                int[] follow = {')'};
+                this.skipTo(expected, follow);
         }
     }
 
@@ -381,7 +446,9 @@ public class Syntaxer {
                 this.simpleExprTail();
                 break;
             default:
-                this.error();
+                int[] expected = {Tag.ID, Tag.NUM, Tag.STRING, '(', Tag.NOT, '-'};
+                int[] follow = {';', ')', '>', '=', Tag.GTE, '<', Tag.LTE, Tag.DIFF};
+                this.skipTo(expected, follow);
         }
     }
 
@@ -404,7 +471,9 @@ public class Syntaxer {
             case Tag.DIFF:
                 break;
             default:
-                this.error();
+                int[] expected = {Tag.OR, '+', '-', ';', ')', '>', '=', Tag.GTE, '<', Tag.LTE, Tag.DIFF};
+                int[] follow = {';', ')', '>', '=', Tag.GTE, '<', Tag.LTE, Tag.DIFF};
+                this.skipTo(expected, follow);
         }
     }
 
@@ -420,7 +489,9 @@ public class Syntaxer {
                 this.termTail();
                 break;
             default:
-                this.error();
+                int[] expected = {Tag.ID, Tag.NUM, Tag.STRING, '(', Tag.NOT, '-'};
+                int[] follow = {Tag.OR, '+', '-', ';', ')', '>', '=', Tag.GTE, '<', Tag.LTE, Tag.DIFF};
+                this.skipTo(expected, follow);
         }
     }
 
@@ -446,7 +517,9 @@ public class Syntaxer {
             case Tag.DIFF:
                 break;
             default:
-                this.error();
+                int[] expected = {'*', '/', Tag.AND, Tag.OR, '+', '-', ';', ')', '>', '=', Tag.GTE, '<', Tag.LTE, Tag.DIFF};
+                int[] follow = {Tag.OR, '+', '-', ';', ')', '>', '=', Tag.GTE, '<', Tag.LTE, Tag.DIFF};
+                this.skipTo(expected, follow);
         }
     }
 
@@ -467,7 +540,9 @@ public class Syntaxer {
                 this.factor();
                 break;
             default:
-                this.error();
+                int[] expected = {Tag.ID, Tag.NUM, Tag.STRING, '(', Tag.NOT, '-'};
+                int[] follow = {'*', '/', Tag.AND, Tag.OR, '+', '-', ';', ')', '>', '=', Tag.GTE, '<', Tag.LTE, Tag.DIFF};
+                this.skipTo(expected, follow);
         }
     }
 
@@ -488,7 +563,9 @@ public class Syntaxer {
                 this.eat(')');
                 break;
             default:
-                this.error();
+                int[] expected = {Tag.ID, Tag.NUM, Tag.STRING, '('};
+                int[] follow = {'*', '/', Tag.AND, Tag.OR, '+', '-', ';', ')', '>', '=', Tag.GTE, '<', Tag.LTE, Tag.DIFF};
+                this.skipTo(expected, follow);
         }
     }
 
@@ -513,7 +590,9 @@ public class Syntaxer {
                 this.eat(Tag.DIFF);
                 break;
             default:
-                this.error();
+                int[] expected = {'>', '=', Tag.GTE, '<', Tag.LTE, Tag.DIFF};
+                int[] follow = {Tag.ID, Tag.NUM, Tag.STRING, '(', Tag.NOT, '-'};
+                this.skipTo(expected, follow);
         }
     }
 
@@ -529,7 +608,9 @@ public class Syntaxer {
                 this.eat(Tag.OR);
                 break;
             default:
-                this.error();
+                int[] expected = {Tag.OR, '+', '-'};
+                int[] follow = {Tag.ID, Tag.NUM, Tag.STRING, '(', Tag.NOT, '-'};
+                this.skipTo(expected, follow);
         }
     }
 
@@ -545,7 +626,9 @@ public class Syntaxer {
                 this.eat(Tag.AND);
                 break;
             default:
-                this.error();
+                int[] expected = {'*', '/', Tag.AND};
+                int[] follow = {Tag.ID, Tag.NUM, Tag.STRING, '(', Tag.NOT, '-'};
+                this.skipTo(expected, follow);
         }
     }
 
@@ -558,7 +641,9 @@ public class Syntaxer {
                 this.eat(Tag.STRING);
                 break;
             default:
-                this.error();
+                int[] expected = {Tag.NUM, Tag.STRING};
+                int[] follow = {'*', '/', Tag.AND, Tag.OR, '+', '-', ';', ')', '>', '=', Tag.GTE, '<', Tag.LTE, Tag.DIFF};
+                this.skipTo(expected, follow);
         }
     }
 

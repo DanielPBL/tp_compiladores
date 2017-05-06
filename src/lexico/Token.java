@@ -10,6 +10,6 @@ public class Token {
 
     @Override
     public String toString() {
-        return "<" + Tag.getName(this.tag) + ">";
+        return "'" + Tag.getName(this.tag) + "'";
     }
 }

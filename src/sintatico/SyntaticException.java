@@ -6,30 +6,43 @@
 package sintatico;
 
 import compilador.CompilationException;
-import lexico.Tag;
 import lexico.Token;
-import lexico.Word;
 
 /**
  *
  * @author desenv00
  */
 public class SyntaticException extends CompilationException {
-    private Token token;
-    private Token[] exp;
-    
-    public SyntaticException(int linha, Token token, Token[] exp) {
+
+    private final Token token;
+    private final Token[] expected;
+
+    public Token getToken() {
+        return this.token;
+    }
+
+    public Token[] getExp() {
+        return this.expected;
+    }
+
+    public SyntaticException(int linha, Token token, int[] tags) {
         super(linha);
         this.token = token;
-        this.exp = exp;
-        
-        switch (this.token.tag) {
-            case Tag.EOF:
-                this.msg = "Fim de arquivo inesperado";
-                break;
-            default:
-                this.msg = "Token inesperado " + token;
+        this.expected = new Token[tags.length];
+
+        if (this.expected.length > 1) {
+            this.msg = "Eram esperados: ";
+        } else {
+            this.msg = "Era esperado: ";
         }
+
+        for (int i = 0; i < expected.length; i++) {
+            this.expected[i] = new Token(tags[i]);
+            this.msg += this.expected[i] + ", ";
+        }
+
+        this.msg = this.msg.substring(0, this.msg.length() - 2);
+        this.msg += ". Porém " + this.token + " foi encontrado.";
     }
-    
+
 }

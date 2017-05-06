@@ -23,6 +23,6 @@ public class Word extends Token {
 
     @Override
     public String toString() {
-        return "<" + Tag.getName(this.tag) + ", " + this.lexeme + ">";
+        return "'" + this.lexeme + "'";
     }
 }

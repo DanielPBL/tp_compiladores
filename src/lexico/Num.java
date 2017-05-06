@@ -15,7 +15,7 @@ public class Num extends Token {
 
     @Override
     public String toString() {
-        return "<NUM, " + this.value + ">";
+        return "'" + this.value + "'";
     }
 
 }

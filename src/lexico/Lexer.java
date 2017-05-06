@@ -9,6 +9,7 @@ public class Lexer {
 
     public static int line = 1;
     private char ch = ' ';
+    private boolean eof = false;
     private FileReader file;
 
     public HashMap<String, Token> words = new HashMap<>();
@@ -17,11 +18,11 @@ public class Lexer {
         this.words.put(w.getLexeme().toLowerCase(), w);
     }
 
-    private void readch() throws IOException, LexicalException {
+    private void readch() throws IOException {
         int read = this.file.read();
 
         if (read == -1) {
-            throw new LexicalException(Lexer.line, new Token(Tag.EOF));
+            this.eof = true;
         }
 
         this.ch = (char) read;
@@ -72,136 +73,129 @@ public class Lexer {
     }
 
     public Token scan() throws IOException, LexicalException {
-        try {
-            //Desconsidera delimitadores na entrada
-            OUTTER:
-            while (true) {
-                switch (this.ch) {
-                    case ' ':
-                    case '\t':
-                    case '\r':
-                    case '\b':
-                        this.readch();
-                        break;
-                    case '\n':
-                        Lexer.line++;
-                        this.readch();
-                        break;
-                    default:
-                        break OUTTER;
-                }
-            }
-
-            //Desconsidera comentários de uma linha
-            if (this.ch == '/') {
-                if (this.readch('/')) {
-                    //Ignora tudo até encontrar o \n
-                    while (this.ch != '\n') {
-                        this.readch();
-                    }
-
-                    return this.scan();
-                } else {
-                    return new Token('/');
-                }
-            }
-
-            //Desconsidera blocos de comentários
-            if (this.ch == '{') {
-                do {
+        //Desconsidera delimitadores na entrada
+        OUTTER:
+        while (true) {
+            switch (this.ch) {
+                case ' ':
+                case '\t':
+                case '\r':
+                case '\b':
                     this.readch();
-                    if (this.ch == '\n') {
-                        Lexer.line++;
-                    }
-                } while (this.ch != '}');
-                this.ch = ' ';
+                    break;
+                case '\n':
+                    Lexer.line++;
+                    this.readch();
+                    break;
+                default:
+                    break OUTTER;
+            }
+        }
+
+        //Desconsidera comentários de uma linha
+        if (this.ch == '/') {
+            if (this.readch('/')) {
+                //Ignora tudo até encontrar o \n
+                while (this.ch != '\n') {
+                    this.readch();
+                }
 
                 return this.scan();
+            } else {
+                return new Token('/');
             }
+        }
 
-            //Operadores
-            switch (this.ch) {
-                case ':':
-                    if (this.readch('=')) {
-                        return Word.ATRIB;
-                    }
-                    break;
-                case '>':
-                    if (this.readch('=')) {
-                        return Word.GTE;
-                    } else {
-                        return new Token('>');
-                    }
-                case '<':
-                    if (this.readch('=')) {
-                        return Word.LTE;
-                    } else if (this.ch == '>') {
-                        return Word.DIFF;
-                    } else {
-                        return new Token('<');
-                    }
-            }
-
-            //Constantes inteiras
-            if (Character.isDigit(this.ch)) {
-                if (this.ch == '0') {
-                    this.ch = ' ';
-
-                    return new Num(0);
-                }
-
-                int value = 0;
-                do {
-                    value = 10 * value + Character.digit(this.ch, 10);
-                    this.readch();
-                } while (Character.isDigit(this.ch));
-
-                return new Num(value);
-            }
-
-            //Literais
-            if (this.ch == '"') {
-                String literal = "";
-
+        //Desconsidera blocos de comentários
+        if (this.ch == '{') {
+            do {
                 this.readch();
-                while (this.ch != '\n' && this.ch != '"') {
-                    literal += this.ch;
-                    this.readch();
+                if (this.ch == '\n') {
+                    Lexer.line++;
                 }
+            } while (this.ch != '}');
+            this.ch = ' ';
 
-                if (this.ch == '"') { //Tudo certo, literal fechado corretamente
-                    this.ch = ' ';
-                    return new Word(literal, Tag.STRING);
+            return this.scan();
+        }
+
+        //Operadores
+        switch (this.ch) {
+            case ':':
+                if (this.readch('=')) {
+                    return Word.ATRIB;
                 } else {
-                    throw new LexicalException(Lexer.line, new Word("Literal não terminado", 0));
+                    throw new LexicalException(Lexer.line, new Word(":", Tag.INV));
                 }
+            case '>':
+                if (this.readch('=')) {
+                    return Word.GTE;
+                } else {
+                    return new Token('>');
+                }
+            case '<':
+                if (this.readch('=')) {
+                    return Word.LTE;
+                } else if (this.ch == '>') {
+                    return Word.DIFF;
+                } else {
+                    return new Token('<');
+                }
+        }
+
+        //Constantes inteiras
+        if (Character.isDigit(this.ch)) {
+            if (this.ch == '0') {
+                this.ch = ' ';
+
+                return new Num(0);
             }
 
-            //Identificadores
-            if (Character.isLetter(this.ch)) {
-                String id = "";
+            int value = 0;
+            do {
+                value = 10 * value + Character.digit(this.ch, 10);
+                this.readch();
+            } while (Character.isDigit(this.ch));
 
-                do {
-                    id += ch;
-                    this.readch();
-                } while (Character.isLetterOrDigit(this.ch) || this.ch == '_');
+            return new Num(value);
+        }
 
-                Word word = (Word) words.get(id.toLowerCase());
+        //Literais
+        if (this.ch == '"') {
+            String literal = "";
 
-                if (word != null) {
-                    return word;
-                }
+            this.readch();
+            while (this.ch != '\n' && this.ch != '"') {
+                literal += this.ch;
+                this.readch();
+            }
 
-                word = new Word(id, Tag.ID);
-                this.reserve(word);
+            if (this.ch == '"') { //Tudo certo, literal fechado corretamente
+                this.ch = ' ';
+                return new Word(literal, Tag.STRING);
+            } else {
+                throw new LexicalException(Lexer.line, new Word("Literal não terminado.", 0));
+            }
+        }
+
+        //Identificadores
+        if (Character.isLetter(this.ch)) {
+            String id = "";
+
+            do {
+                id += ch;
+                this.readch();
+            } while (Character.isLetterOrDigit(this.ch) || this.ch == '_');
+
+            Word word = (Word) words.get(id.toLowerCase());
+
+            if (word != null) {
                 return word;
             }
-        } catch (LexicalException le) {
-            if (le.getToken().tag == Tag.EOF) {
-                return le.getToken();
-            } else {
-                throw le;
-            }
+
+            word = new Word(id, Tag.ID);
+            this.reserve(word);
+            return word;
         }
 
         switch (this.ch) {
@@ -218,6 +212,9 @@ public class Lexer {
                 this.ch = ' ';
                 return t;
             default:
+                if (this.eof == true) {
+                    return new Token(Tag.EOF);
+                }
                 char chr = this.ch;
                 this.ch = ' ';
                 throw new LexicalException(Lexer.line, new Word("" + chr, Tag.INV));

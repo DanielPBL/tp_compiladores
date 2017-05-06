@@ -47,10 +47,10 @@ public class Tag {
                 str = "IS";
                 break;
             case T_INTEGER:
-                str = "T_INTEGER";
+                str = "INTEGER";
                 break;
             case T_STRING:
-                str = "T_STRING";
+                str = "STRING";
                 break;
             case IF:
                 str = "IF";
@@ -86,16 +86,16 @@ public class Tag {
                 str = "AND";
                 break;
             case ATRIB:
-                str = "ATRIB";
+                str = ":=";
                 break;
             case GTE:
-                str = "GTE";
+                str = ">=";
                 break;
             case LTE:
-                str = "LTE";
+                str = "<=";
                 break;
             case DIFF:
-                str = "DIFF";
+                str = "<>";
                 break;
             case NUM:
                 str = "NUM";

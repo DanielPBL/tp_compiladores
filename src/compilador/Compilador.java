@@ -23,7 +23,13 @@ public class Compilador {
             syntaxer = new Syntaxer(lexer);
 
             syntaxer.program();
-            System.out.println("Analise sintática efetuada com sucesso");
+            
+            if (syntaxer.success) {
+                System.out.println("Análise sintática terminada com sucesso.");
+            } else {
+                System.out.println("Análse sintática terminada com erros.");
+            }
+            
         } catch (FileNotFoundException e) {
 
         }
