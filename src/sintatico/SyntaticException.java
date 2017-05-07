@@ -26,23 +26,18 @@ public class SyntaticException extends CompilationException {
     }
 
     public SyntaticException(int linha, Token token, int[] tags) {
-        super(linha);
+        super(linha, "sintático");
         this.token = token;
         this.expected = new Token[tags.length];
-
-        if (this.expected.length > 1) {
-            this.msg = "Eram esperados: ";
-        } else {
-            this.msg = "Era esperado: ";
-        }
+        
+        this.msg = "Token " + this.token + " inesperado. Esperando ";
 
         for (int i = 0; i < expected.length; i++) {
             this.expected[i] = new Token(tags[i]);
             this.msg += this.expected[i] + ", ";
         }
 
-        this.msg = this.msg.substring(0, this.msg.length() - 2);
-        this.msg += ". Porém " + this.token + " foi encontrado.";
+        this.msg = this.msg.substring(0, this.msg.length() - 2) + ".";
     }
 
 }

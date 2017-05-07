@@ -4,9 +4,11 @@ public abstract class CompilationException extends Exception {
 
     protected int line;
     protected String msg;
+    protected String type;
     
-    public CompilationException(int line) {
+    public CompilationException(int line, String type) {
         this.line = line;
+        this.type = type;
     }
 
     public String getMsg() {
@@ -26,6 +28,6 @@ public abstract class CompilationException extends Exception {
     }
     
     public void printError() {
-        System.out.printf("Erro na linha %d: %s\n", this.line, this.msg);
+        System.out.printf("Erro %s na linha %d: %s\n", this.type, this.line, this.msg);
     }
 }

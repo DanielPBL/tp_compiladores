@@ -11,15 +11,12 @@ public class LexicalException extends CompilationException {
     }
 
     public LexicalException(int linha, Token token) {
-        super(linha);
+        super(linha, "léxico");
         this.token = token;
 
         switch (this.token.tag) {
             case Tag.INV:
                 this.msg = "Token inválido '" + ((Word) token).getLexeme() + "'.";
-                break;
-            case Tag.EOF:
-                this.msg = "Fim de arquivo inesperado.";
                 break;
             default:
                 this.msg = ((Word) token).getLexeme();

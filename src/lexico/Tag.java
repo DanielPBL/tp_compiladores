@@ -38,52 +38,52 @@ public class Tag {
 
         switch (token) {
             case INIT:
-                str = "INIT";
+                str = "init";
                 break;
             case STOP:
-                str = "STOP";
+                str = "stop";
                 break;
             case IS:
-                str = "IS";
+                str = "is";
                 break;
             case T_INTEGER:
-                str = "INTEGER";
+                str = "integer";
                 break;
             case T_STRING:
-                str = "STRING";
+                str = "string";
                 break;
             case IF:
-                str = "IF";
+                str = "if";
                 break;
             case BEGIN:
-                str = "BEGIN";
+                str = "begin";
                 break;
             case END:
-                str = "END";
+                str = "end";
                 break;
             case ELSE:
-                str = "ELSE";
+                str = "else";
                 break;
             case DO:
-                str = "DO";
+                str = "do";
                 break;
             case WHILE:
-                str = "WHILE";
+                str = "while";
                 break;
             case READ:
-                str = "READ";
+                str = "read";
                 break;
             case WRITE:
-                str = "WRITE";
+                str = "write";
                 break;
             case NOT:
-                str = "NOT";
+                str = "not";
                 break;
             case OR:
-                str = "OR";
+                str = "or";
                 break;
             case AND:
-                str = "AND";
+                str = "and";
                 break;
             case ATRIB:
                 str = ":=";
