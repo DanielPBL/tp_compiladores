@@ -8,15 +8,17 @@ init
 	read(j);
 	read(k);
 
- 	if (j == "ok")
+ 	if (j = "ok")
 	begin
-		result = k/m
+		result := k/m;
 	end
 	else
 	begin
 		result := 0;
 		write ("Invalid entry");
-	end
+	end;
 
 
 	write(result);
+
+stop
