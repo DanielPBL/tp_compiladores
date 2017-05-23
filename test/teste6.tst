@@ -6,13 +6,13 @@ init
 		read(c);
 
 		maior := 0;
-		if ( a>b)
+		if ( (a>b) and (a>c))
     begin
-      if (a>c)
-      begin
+
+
 
 			   maior := a;
-      end;
+
     end
 		else
     begin
