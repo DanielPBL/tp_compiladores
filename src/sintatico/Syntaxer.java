@@ -79,13 +79,13 @@ public class Syntaxer {
         switch (this.token.tag) {
             case Tag.ID:
                 this.eat(Tag.ID);
-                this.z1();
+                this.assignOrDecl();
                 break;
             case Tag.IF:
             case Tag.DO:
             case Tag.READ:
             case Tag.WRITE:
-                this.z2();
+                this.stmtNoAssign();
                 this.eat(';');
                 this.stmtListTail();
                 break;
@@ -96,7 +96,7 @@ public class Syntaxer {
         }
     }
 
-    public void z1() {
+    public void assignOrDecl() {
         switch (this.token.tag) {
             case Tag.ATRIB:
                 this.eat(Tag.ATRIB);
@@ -119,7 +119,7 @@ public class Syntaxer {
         }
     }
 
-    public void z2() {
+    public void stmtNoAssign() {
         switch (this.token.tag) {
             case Tag.IF:
                 this.ifStmt();
