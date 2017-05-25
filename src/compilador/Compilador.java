@@ -27,7 +27,7 @@ public class Compilador {
             if (syntaxer.success) {
                 System.out.println("Análise sintática terminada com sucesso.");
             } else {
-                System.out.println("Análse sintática terminada com erros.");
+                System.out.println("Análise sintática terminada com erro(s).");
             }
             
         } catch (FileNotFoundException e) {
