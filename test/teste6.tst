@@ -1,32 +1,27 @@
 init
- 	a, b, c, maior is integer;
+    a, b, c, maior is integer;
 
-		read(a);
-		read(b);
-		read(c);
+	read(a);
+	read(b);
+	read(c);
 
-		maior := 0;
-		if ( (a>b) and (a>c))
+	maior := 0;
+	if ((a > b) and (a > c))
     begin
-
-
-
-			   maior := a;
-
+	   maior := a;
     end
-		else
+    else
     begin
-			if (b>c)
-      begin
-				maior := b;
-      end
-			else
-      begin
-				maior := c;
-      end;
+        if (b > c)
+        begin
+            maior := b;
+        end
+		else
+        begin
+            maior := c;
+        end;
     end;
 
-		write("Maior idade: ");
-		write(maior);
-
+    write("Maior idade: ");
+    write(maior);
 stop

@@ -1,9 +1,7 @@
 init
 // Programa com if
-
-		 j, k, m is integer;
-		 a, j is string;
-
+	j, k, m is integer;
+	a, j is string;
 
 	read(j);
 	read(k);
@@ -15,10 +13,8 @@ init
 	else
 	begin
 		result := 0;
-		write ("Invalid entry");
+		write("Invalid entry");
 	end;
 
-
 	write(result);
-
 stop
