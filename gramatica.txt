@@ -1,10 +1,10 @@
-program' ::= program $
+﻿program' ::= program $
 program ::= init decl-stmt-list stop
-decl-stmt-list := id z1
- | z2 ";" stmt-list-tail
-z1 ::= ":=" simple-expr ";" stmt-list-tail
+decl-stmt-list := id assign-or-decl
+ | stmt-no-assign ";" stmt-list-tail
+assign-or-decl ::= ":=" simple-expr ";" stmt-list-tail
  | ident-list-tail is type ";" decl-stmt-list-tail
-z2 ::= if-stmt | do-stmt
+stmt-no-assign ::= if-stmt | do-stmt
  | read-stmt | write-stmt
 decl-stmt-list-tail ::= decl-stmt-list
  | λ
