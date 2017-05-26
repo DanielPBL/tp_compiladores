@@ -7,11 +7,11 @@ init
 
 	if (n = 1)
 	begin
-		proximo := 1;
+		proximo := 0;
 	end
 	else
 	begin
-		if (n = 1)
+		if (n = 2)
 		begin
 			proximo := 1;
 		end

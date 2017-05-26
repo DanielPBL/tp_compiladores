@@ -53,6 +53,13 @@ public class Syntaxer {
     private void skipTo(int[] expected, int[] follow) {
         SyntaticException se = new SyntaticException(Lexer.line, this.token, expected);
         se.printError();
+        
+        //Evitar erro de EOF propagando pela pilha de recursão
+        if (this.token.tag == Tag.EOF) {
+            System.out.println("Análise sintática terminada com erro(s).");
+            System.exit(1);
+        }
+        
         this.success = false;
 
         do {

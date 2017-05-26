@@ -113,7 +113,7 @@ public class Lexer {
                 if (this.ch == '\n') {
                     Lexer.line++;
                 }
-            } while (this.ch != '}');
+            } while (this.ch != '}' && !this.eof);            
             this.ch = ' ';
 
             return this.scan();

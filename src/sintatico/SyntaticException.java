@@ -6,6 +6,7 @@
 package sintatico;
 
 import compilador.CompilationException;
+import lexico.Tag;
 import lexico.Token;
 
 /**
@@ -29,8 +30,12 @@ public class SyntaticException extends CompilationException {
         super(linha, "sintático");
         this.token = token;
         this.expected = new Token[tags.length];
-        
-        this.msg = "Token " + this.token + " inesperado. Esperando ";
+
+        if (this.token.tag == Tag.EOF) {
+            this.msg = "Fim de arquivo inesperado. Esperando ";
+        } else {
+            this.msg = "Token " + this.token + " inesperado. Esperando ";
+        }
 
         for (int i = 0; i < expected.length; i++) {
             this.expected[i] = new Token(tags[i]);
