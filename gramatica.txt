@@ -1,43 +1,54 @@
 ﻿program' ::= program $
 program ::= init decl-stmt-list stop
-decl-stmt-list := id assign-or-decl
+decl-stmt-list := id assign-or-decl {set_tipo(id.entrada, assign-or-decl.tipo)}
  | stmt-no-assign ";" stmt-list-tail
-assign-or-decl ::= ":=" simple-expr ";" stmt-list-tail
- | ident-list-tail is type ";" decl-stmt-list-tail
-stmt-no-assign ::= if-stmt | do-stmt
- | read-stmt | write-stmt
+assign-or-decl ::= ":=" simple-expr ";" stmt-list-tail {assign-or-decl.tipo = simple-expr.tipo}
+ | ident-list-tail is type ";" decl-stmt-list-tail {assign-or-decl.tipo = type.tipo}
+stmt-no-assign ::= if-stmt
+ | do-stmt
+ | read-stmt
+ | write-stmt
 decl-stmt-list-tail ::= decl-stmt-list
  | λ
 ident-list-tail ::= "," id ident-list-tail
  | λ
-type ::= integer | string
+type ::= integer {type.tipo = integer}
+ | string {type.tipo = integer}
 stmt-list ::= stmt ";" stmt-list-tail
 stmt-list-tail ::= stmt ";" stmt-list-tail
  | λ
-stmt ::= assign-stmt | if-stmt | do-stmt
- | read-stmt | write-stmt
-assign-stmt ::= id ":=" simple_expr
-if-stmt ::= if "(" condition ")" begin stmt-list end if-suffix
+stmt ::= assign-stmt
+ | if-stmt
+ | do-stmt
+ | read-stmt
+ | write-stmt
+assign-stmt ::= id ":=" simple_expr {set_tipo(id.entrada, simple_expr.tipo)}
+if-stmt ::= if "(" condition ")" begin stmt-list end if-suffix {se condition.tipo = booliano então if-stmt.tipo = null senão if-stmt.tipo = erro}
 if-suffix ::= else begin stmt-list end
  | λ
-condition ::= expression
+condition ::= expression {condition.tipo = expression.tipo}
 do-stmt ::= do stmt-list do-suffix
-do-suffix ::= while "(" condition ")"
+do-suffix ::= while "(" condition ")" {se condition.tipo = booliano então do-suffix.tipo = null senão do-suffix.tipo = erro}
 read-stmt ::= read "(" id ")"
 write-stmt ::= write "(" writable ")"
 writable ::= simple-expr
 expression ::= simple-expr expression-suffix
 expression-suffix ::= relop simple-expr
- | λ
+ | λ {expression-suffix.tipo = null}
 simple-expr ::= term simple-expr-tail 
 simple-expr-tail ::= addop term simple-expr-tail
- | λ
-term ::= factor-a term-tail 
-term-tail ::= mulop factor-a term-tail
- | λ
-factor-a ::= factor | not factor | "-" factor
-factor ::= id | constant | "(" expression ")"
+ | λ {simple-expr-tail.tipo = null}
+term ::= factor-a term-tail {se factor-a.tipo = term-tail.tipo então term.tipo = factor-a.tipo senão term.tipo = erro}
+term-tail ::= mulop factor-a term-tail-1 
+ | λ {term-tail.tipo = null}
+factor-a ::= factor {factor-a.tipo = factor.tipo}
+ | not factor {se factor.tipo = boolean então factor-a.tipo = boolean senão factor-a.tipo = erro}
+ | "-" factor {se factor.tipo = integer então factor-a.tipo = integer senão factor-a.tipo = erro}
+factor ::= id {factor.tipo = obter_tipo(id.entrada)}
+ | constant {factor.tipo = constant.tipo}
+ | "(" expression ")" {factor.tipo = expression.tipo}
 relop ::= "=" | ">" | ">=" | "<" | "<=" | "<>"
 addop ::= "+" | "-" | or
 mulop ::= "*" | "/" | and
-constant ::= integer_const | literal
+constant ::= integer_const {contant.tipo = integer}
+ | literal {constant.tipo = string}

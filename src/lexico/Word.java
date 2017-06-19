@@ -1,11 +1,22 @@
 package lexico;
 
+import semantico.Type;
+
 public class Word extends Token {
 
     private String lexeme = "";
+    private Type type = Type.NULL;
 
     public String getLexeme() {
         return this.lexeme;
+    }
+    
+    public Type getType() {
+        return this.type;
+    }
+    
+    public void setType(Type type) {
+        this.type = type;
     }
 
     public static final Word

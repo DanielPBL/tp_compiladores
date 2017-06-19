@@ -5,12 +5,14 @@ import lexico.Lexer;
 import lexico.LexicalException;
 import lexico.Tag;
 import lexico.Token;
+import lexico.Word;
+import semantico.Type;
 
 public class Syntaxer {
 
     private final Lexer lexer;
     private Token token;
-    
+
     public boolean success = true;
 
     public Syntaxer(Lexer lexer) {
@@ -53,13 +55,13 @@ public class Syntaxer {
     private void skipTo(int[] expected, int[] follow) {
         SyntaticException se = new SyntaticException(Lexer.line, this.token, expected);
         se.printError();
-        
+
         //Evitar erro de EOF propagando pela pilha de recursão
         if (this.token.tag == Tag.EOF) {
             System.out.println("Análise sintática terminada com erro(s).");
             System.exit(1);
         }
-        
+
         this.success = false;
 
         do {
@@ -403,7 +405,9 @@ public class Syntaxer {
         }
     }
 
-    public void expression() {
+    public Type expression() {
+        Type type = Type.ERROR;
+        
         switch (this.token.tag) {
             case Tag.ID:
             case Tag.NUM:
@@ -419,6 +423,8 @@ public class Syntaxer {
                 int[] follow = {')'};
                 this.skipTo(expected, follow);
         }
+        
+        return type;
     }
 
     public void expressionSuffix() {
@@ -553,20 +559,29 @@ public class Syntaxer {
         }
     }
 
-    public void factor() {
+    public Type factor() {
+        Type type = Type.ERROR;
+
         switch (this.token.tag) {
             case Tag.ID:
+                type = ((Word) this.token).getType();
+                if (type == Type.NULL) {
+                    //TODO: Excessão semântica, identificador não declarado.
+                    type = Type.ERROR;
+                }
                 this.eat(Tag.ID);
                 break;
             case Tag.NUM:
+                type = Type.INTEGER;
                 this.eat(Tag.NUM);
                 break;
             case Tag.STRING:
+                type = Type.STRING;
                 this.eat(Tag.STRING);
                 break;
             case '(':
                 this.eat('(');
-                this.expression();
+                type = this.expression();
                 this.eat(')');
                 break;
             default:
@@ -574,6 +589,8 @@ public class Syntaxer {
                 int[] follow = {'*', '/', Tag.AND, Tag.OR, '+', '-', ';', ')', '>', '=', Tag.GTE, '<', Tag.LTE, Tag.DIFF};
                 this.skipTo(expected, follow);
         }
+
+        return type;
     }
 
     public void relOp() {
@@ -639,12 +656,16 @@ public class Syntaxer {
         }
     }
 
-    public void constant() {
+    public Type constant() {
+        Type type = Type.ERROR;
+
         switch (this.token.tag) {
             case Tag.NUM:
+                type = Type.INTEGER;
                 this.eat(Tag.NUM);
                 break;
             case Tag.STRING:
+                type = Type.STRING;
                 this.eat(Tag.STRING);
                 break;
             default:
@@ -652,6 +673,8 @@ public class Syntaxer {
                 int[] follow = {'*', '/', Tag.AND, Tag.OR, '+', '-', ';', ')', '>', '=', Tag.GTE, '<', Tag.LTE, Tag.DIFF};
                 this.skipTo(expected, follow);
         }
+
+        return type;
     }
 
 }
