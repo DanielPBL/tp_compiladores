@@ -5,10 +5,16 @@
  */
 package semantico;
 
+import compilador.CompilationException;
+
 /**
  *
  * @author desenv00
  */
-public class SemanticException {
+public class SemanticException extends CompilationException {
+    
+    public SemanticException(int line, String type) {
+        super(line, type);
+    }
     
 }
