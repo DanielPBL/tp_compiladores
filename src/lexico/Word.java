@@ -5,20 +5,11 @@ import semantico.Type;
 public class Word extends Token {
 
     private String lexeme = "";
-    private Type type = Type.NULL;
+    public Type type;
 
     public String getLexeme() {
         return this.lexeme;
     }
-    
-    public Type getType() {
-        return this.type;
-    }
-    
-    public void setType(Type type) {
-        this.type = type;
-    }
-
     public static final Word
             AND = new Word("and", Tag.AND),
             OR = new Word("or", Tag.OR),

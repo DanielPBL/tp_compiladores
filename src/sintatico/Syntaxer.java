@@ -6,6 +6,10 @@ import lexico.LexicalException;
 import lexico.Tag;
 import lexico.Token;
 import lexico.Word;
+import semantico.AssignCommand;
+import semantico.Command;
+import semantico.DeclarationCommand;
+import semantico.Expression;
 import semantico.Type;
 
 public class Syntaxer {
@@ -69,11 +73,13 @@ public class Syntaxer {
         } while (!this.contains(this.token, follow) && this.token.tag != Tag.EOF);
     }
 
-    public void program() {
+    public Command program() {
+        Command command = new Command();
+
         switch (this.token.tag) {
             case Tag.INIT:
                 this.eat(Tag.INIT);
-                this.declStmtList();
+                command.type = this.declStmtList().type;
                 this.eat(Tag.STOP);
                 this.eat(Tag.EOF);
                 break;
@@ -82,53 +88,82 @@ public class Syntaxer {
                 int[] follow = {Tag.EOF};
                 this.skipTo(expected, follow);
         }
+
+        return command;
     }
 
-    public void declStmtList() {
+    public Command declStmtList() {
+        Command command = new Command();
+
         switch (this.token.tag) {
             case Tag.ID:
+                Word id = (Word) this.token;
                 this.eat(Tag.ID);
-                this.assignOrDecl();
+                command = this.assignOrDecl();
+                if (command instanceof DeclarationCommand) { //Declaração
+                    DeclarationCommand dc = (DeclarationCommand) command;
+                    dc.add(id);
+                    dc.resolve();
+                } else { //Atribuição
+                    AssignCommand ac = (AssignCommand) command;
+                    if (ac.assignType.type == id.type.type) {
+                        command.type = ac.type;
+                    }
+                }
                 break;
             case Tag.IF:
             case Tag.DO:
             case Tag.READ:
             case Tag.WRITE:
-                this.stmtNoAssign();
+                Command c1;
+                Command c2;
+                c1 = this.stmtNoAssign();
                 this.eat(';');
-                this.stmtListTail();
+                c2 = this.stmtListTail();
+                if (c1.type.type == Type.NULL && c2.type.type == Type.NULL) {
+                    command.type.type = Type.NULL;
+                }
                 break;
             default:
                 int[] expected = {Tag.ID, Tag.IF, Tag.DO, Tag.READ, Tag.WRITE};
                 int[] follow = {Tag.STOP};
                 this.skipTo(expected, follow);
         }
+
+        return command;
     }
 
-    public void assignOrDecl() {
+    public Command assignOrDecl() {
+        Command command = new Command();
+
         switch (this.token.tag) {
             case Tag.ATRIB:
                 this.eat(Tag.ATRIB);
-                this.simpleExpr();
+                Expression expr = this.simpleExpr();
                 this.eat(';');
-                this.stmtListTail();
+                Command c1 = this.stmtListTail();
+                command = new AssignCommand(expr.type, c1.type);
                 break;
             case ',':
             case Tag.IS:
-                this.identListTail();
+                DeclarationCommand dc = this.identListTail();
                 this.eat(Tag.IS);
-                this.type();
+                Type type = this.type();
                 this.eat(';');
-                this.declStmtListTail();
+                Command c2 = this.declStmtListTail();
                 break;
             default:
                 int[] expected = {Tag.ATRIB, ',', Tag.IS};
                 int[] follow = {Tag.STOP};
                 this.skipTo(expected, follow);
         }
+
+        return command;
     }
 
-    public void stmtNoAssign() {
+    public Command stmtNoAssign() {
+        Command command = new Command();
+
         switch (this.token.tag) {
             case Tag.IF:
                 this.ifStmt();
@@ -147,9 +182,13 @@ public class Syntaxer {
                 int[] follow = {';'};
                 this.skipTo(expected, follow);
         }
+
+        return command;
     }
 
-    public void declStmtListTail() {
+    public Command declStmtListTail() {
+        Command command = new Command();
+        
         switch (this.token.tag) {
             case Tag.ID:
             case Tag.IF:
@@ -165,9 +204,13 @@ public class Syntaxer {
                 int[] follow = {Tag.STOP};
                 this.skipTo(expected, follow);
         }
+        
+        return command;
     }
 
-    public void identListTail() {
+    public DeclarationCommand identListTail() {
+        DeclarationCommand dc = new DeclarationCommand();
+        
         switch (this.token.tag) {
             case ',':
                 this.eat(',');
@@ -181,14 +224,20 @@ public class Syntaxer {
                 int[] follow = {Tag.IS};
                 this.skipTo(expected, follow);
         }
+        
+        return dc;
     }
 
-    public void type() {
+    public Type type() {
+        Type type = new Type(Type.ERROR);
+
         switch (this.token.tag) {
             case Tag.T_INTEGER:
+                type.type = Type.INTEGER;
                 this.eat(Tag.T_INTEGER);
                 break;
             case Tag.T_STRING:
+                type.type = Type.STRING;
                 this.eat(Tag.T_STRING);
                 break;
             default:
@@ -196,6 +245,8 @@ public class Syntaxer {
                 int[] follow = {';'};
                 this.skipTo(expected, follow);
         }
+
+        return type;
     }
 
     public void stmtList() {
@@ -216,7 +267,9 @@ public class Syntaxer {
         }
     }
 
-    public void stmtListTail() {
+    public Command stmtListTail() {
+        Command command = new Command();
+
         switch (this.token.tag) {
             case Tag.ID:
             case Tag.IF:
@@ -236,6 +289,8 @@ public class Syntaxer {
                 int[] follow = {Tag.END, Tag.STOP, Tag.WHILE};
                 this.skipTo(expected, follow);
         }
+
+        return command;
     }
 
     public void stmt() {
@@ -406,8 +461,8 @@ public class Syntaxer {
     }
 
     public Type expression() {
-        Type type = Type.ERROR;
-        
+        Type type = new Type(Type.ERROR);
+
         switch (this.token.tag) {
             case Tag.ID:
             case Tag.NUM:
@@ -423,7 +478,7 @@ public class Syntaxer {
                 int[] follow = {')'};
                 this.skipTo(expected, follow);
         }
-        
+
         return type;
     }
 
@@ -447,7 +502,9 @@ public class Syntaxer {
         }
     }
 
-    public void simpleExpr() {
+    public Expression simpleExpr() {
+        Expression expresison = new Expression();
+        
         switch (this.token.tag) {
             case Tag.ID:
             case Tag.NUM:
@@ -463,6 +520,8 @@ public class Syntaxer {
                 int[] follow = {';', ')', '>', '=', Tag.GTE, '<', Tag.LTE, Tag.DIFF};
                 this.skipTo(expected, follow);
         }
+        
+        return expresison;
     }
 
     public void simpleExprTail() {
@@ -560,23 +619,23 @@ public class Syntaxer {
     }
 
     public Type factor() {
-        Type type = Type.ERROR;
+        Type type = new Type(Type.ERROR);
 
         switch (this.token.tag) {
             case Tag.ID:
-                type = ((Word) this.token).getType();
-                if (type == Type.NULL) {
+                type = ((Word) this.token).type;
+                if (type == null) {
                     //TODO: Excessão semântica, identificador não declarado.
-                    type = Type.ERROR;
+                    
                 }
                 this.eat(Tag.ID);
                 break;
             case Tag.NUM:
-                type = Type.INTEGER;
+                type.type = Type.INTEGER;
                 this.eat(Tag.NUM);
                 break;
             case Tag.STRING:
-                type = Type.STRING;
+                type.type = Type.STRING;
                 this.eat(Tag.STRING);
                 break;
             case '(':
@@ -657,15 +716,15 @@ public class Syntaxer {
     }
 
     public Type constant() {
-        Type type = Type.ERROR;
+        Type type = new Type(Type.ERROR);
 
         switch (this.token.tag) {
             case Tag.NUM:
-                type = Type.INTEGER;
+                type.type = Type.INTEGER;
                 this.eat(Tag.NUM);
                 break;
             case Tag.STRING:
-                type = Type.STRING;
+                type.type = Type.INTEGER;
                 this.eat(Tag.STRING);
                 break;
             default:

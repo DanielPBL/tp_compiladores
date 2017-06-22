@@ -9,6 +9,30 @@ package semantico;
  *
  * @author desenv00
  */
-public enum Type {
-    NULL, INTEGER, STRING, BOOLEAN, ERROR
+public class Type {
+
+    public final static int
+            ERROR = 1,
+            NULL = 0,
+            INTEGER = 1,
+            STRING = 2,
+            BOOLEAN = 3;
+    
+    public int type;
+    public int width;
+    
+    public Type(int type, int width) {
+        this.type = type;
+        this.width = width;
+    }
+    
+    public Type(int type) {
+        this.type = type;
+        this.width = 0;
+    }
+    
+    public Type() {
+        this.type = Type.ERROR;
+        this.width = 0;
+    }
 }
