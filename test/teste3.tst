@@ -2,7 +2,7 @@
 Calculo de idade }
 init
 	cont_ is integer;
-	media, idade, soma, altura is integer;
+	media, idade, soma_ is integer;
 
 	cont_ := 5;
 	soma := 0;
@@ -14,5 +14,5 @@ init
 	while (cont_ > 0);
 
 	write("Media: ");
-	write(soma / 5);
+	write(soma / qtd);
 stop

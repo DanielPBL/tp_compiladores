@@ -1,5 +1,5 @@
 init
-	i, j, k, total, soma1, a is integer;
+	i, j, k, total, soma1 is integer;
 
 	read (I);
 	k := i * (5 - i * 50 / 10);
