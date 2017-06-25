@@ -15,13 +15,21 @@ import lexico.Word;
  */
 public class DeclarationCommand extends Command {
 
-    private final List<Word> ids;
+    public final List<Word> ids;
+    public Type idType;
 
     public DeclarationCommand() {
         super();
         this.ids = new LinkedList<>();
     }
-
+    
+    public DeclarationCommand(Type type, Type idType) {
+        super();
+        this.ids = new LinkedList<>();
+        this.type = type;
+        this.idType = idType;
+    }
+    
     public void add(Word id) {
         this.ids.add(id);
     }
@@ -32,7 +40,7 @@ public class DeclarationCommand extends Command {
 
     public void resolve() {
         this.ids.forEach((id) -> {
-            id.type = this.type;
+            id.type = this.idType;
         });
     }
 }
