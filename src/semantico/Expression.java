@@ -10,5 +10,7 @@ package semantico;
  * @author desenv00
  */
 public class Expression {
+
     public Type type;
+    public Operation op;
 }

@@ -10,6 +10,8 @@ import semantico.AssignCommand;
 import semantico.Command;
 import semantico.DeclarationCommand;
 import semantico.Expression;
+import semantico.Operation;
+import semantico.SemanticException;
 import semantico.Type;
 
 public class Syntaxer {
@@ -188,7 +190,7 @@ public class Syntaxer {
 
     public Command declStmtListTail() {
         Command command = new Command();
-        
+
         switch (this.token.tag) {
             case Tag.ID:
             case Tag.IF:
@@ -204,13 +206,13 @@ public class Syntaxer {
                 int[] follow = {Tag.STOP};
                 this.skipTo(expected, follow);
         }
-        
+
         return command;
     }
 
     public DeclarationCommand identListTail() {
         DeclarationCommand dc = new DeclarationCommand();
-        
+
         switch (this.token.tag) {
             case ',':
                 this.eat(',');
@@ -224,7 +226,7 @@ public class Syntaxer {
                 int[] follow = {Tag.IS};
                 this.skipTo(expected, follow);
         }
-        
+
         return dc;
     }
 
@@ -460,8 +462,43 @@ public class Syntaxer {
         }
     }
 
-    public Type expression() {
-        Type type = new Type(Type.ERROR);
+    private Type expressionTypeVerification(Expression exp1, Expression exp2) {
+        Type type = new Type();
+        
+        if (exp2.type.type == Type.NULL) {
+            type = exp1.type;
+        } else {
+            switch(exp2.op.op) {
+                case Operation.GT:
+                case Operation.GTE:
+                case Operation.LT:
+                case Operation.LTE:
+                    if (exp1.type.type == Type.INTEGER && exp2.type.type == Type.INTEGER) {
+                        type.type = Type.BOOLEAN;
+                    } else {
+                        SemanticException se = new SemanticException(Lexer.line, null,
+                                "Operadores de comparação de magnitude só se aplicam ao tipo integer.");
+                        se.printError();
+                    }
+                    break;
+                case Operation.EQUAL:
+                case Operation.DIFF:
+                    if (exp1.type.type == exp2.type.type) {
+                        type.type = Type.BOOLEAN;
+                    } else {
+                        SemanticException se = new SemanticException(Lexer.line, null,
+                            "Operadores de igual/desigualdade só se aplicam a tipos igual.");
+                        se.printError();
+                    }
+                    break;
+            }
+        }
+        
+        return type;
+    }
+    
+    public Expression expression() {
+        Expression exp = new Expression();
 
         switch (this.token.tag) {
             case Tag.ID:
@@ -470,8 +507,9 @@ public class Syntaxer {
             case '(':
             case Tag.NOT:
             case '-':
-                this.simpleExpr();
-                this.expressionSuffix();
+                Expression exp1 = this.simpleExpr();
+                Expression exp2 = this.expressionSuffix();
+                exp.type = this.expressionTypeVerification(exp1, exp2);                
                 break;
             default:
                 int[] expected = {Tag.ID, Tag.NUM, Tag.STRING, '(', Tag.NOT, '-'};
@@ -479,10 +517,12 @@ public class Syntaxer {
                 this.skipTo(expected, follow);
         }
 
-        return type;
+        return exp;
     }
 
-    public void expressionSuffix() {
+    public Expression expressionSuffix() {
+        Expression exp = new Expression();
+        
         switch (this.token.tag) {
             case '>':
             case '=':
@@ -490,21 +530,56 @@ public class Syntaxer {
             case '<':
             case Tag.LTE:
             case Tag.DIFF:
-                this.relOp();
-                this.simpleExpr();
+                exp.op = this.relOp();
+                exp.type = this.simpleExpr().type;
                 break;
             case ')':
+                exp.type.type = Type.NULL;
                 break;
             default:
                 int[] expected = {'>', '=', Tag.GTE, '<', Tag.LTE, Tag.DIFF, ')'};
                 int[] follow = {')'};
                 this.skipTo(expected, follow);
         }
-    }
-
-    public Expression simpleExpr() {
-        Expression expresison = new Expression();
         
+        return exp;
+    }
+    
+    private Type SimpleExprTypeVerification(Expression exp1, Expression exp2) {
+        Type type = new Type();
+        
+        if (exp2.type.type == Type.NULL) {
+            type = exp1.type;
+        } else {
+            switch(exp2.op.op) {
+                case Operation.ADD:
+                case Operation.SUB:
+                    if (exp1.type.type == Type.INTEGER && exp2.type.type == Type.INTEGER) {
+                        type.type = Type.INTEGER;
+                    } else {
+                        SemanticException se = new SemanticException(Lexer.line, null,
+                                "Operadores aritméticos só se aplicam ao tipo integer.");
+                        se.printError();
+                    }
+                    break;
+                case Operation.OR:
+                    if (exp1.type.type == Type.BOOLEAN && exp2.type.type == Type.BOOLEAN) {
+                        type.type = Type.BOOLEAN;
+                    } else {
+                        SemanticException se = new SemanticException(Lexer.line, null,
+                            "Operadores lógicos só se aplicam ao tipo boolean.");
+                        se.printError();
+                    }
+                    break;
+            }
+        }
+        
+        return type;
+    }
+    
+    public Expression simpleExpr() {
+        Expression exp = new Expression();
+
         switch (this.token.tag) {
             case Tag.ID:
             case Tag.NUM:
@@ -512,26 +587,30 @@ public class Syntaxer {
             case '(':
             case Tag.NOT:
             case '-':
-                this.term();
-                this.simpleExprTail();
+                Expression exp1 = this.term();
+                Expression exp2 = this.simpleExprTail();
+                exp.type = this.SimpleExprTypeVerification(exp1, exp2);
                 break;
             default:
                 int[] expected = {Tag.ID, Tag.NUM, Tag.STRING, '(', Tag.NOT, '-'};
                 int[] follow = {';', ')', '>', '=', Tag.GTE, '<', Tag.LTE, Tag.DIFF};
                 this.skipTo(expected, follow);
         }
-        
-        return expresison;
+
+        return exp;
     }
 
-    public void simpleExprTail() {
+    public Expression simpleExprTail() {
+        Expression exp = new Expression();
+        
         switch (this.token.tag) {
             case '+':
             case '-':
             case Tag.OR:
-                this.addOp();
-                this.term();
-                this.simpleExprTail();
+                exp.op = this.addOp();
+                Expression exp1 = this.term();
+                Expression exp2 = this.simpleExprTail();
+                exp.type = this.SimpleExprTypeVerification(exp1, exp2);
                 break;
             case ';':
             case ')':
@@ -541,15 +620,52 @@ public class Syntaxer {
             case '<':
             case Tag.LTE:
             case Tag.DIFF:
+                exp.type.type = Type.NULL;
                 break;
             default:
                 int[] expected = {Tag.OR, '+', '-', ';', ')', '>', '=', Tag.GTE, '<', Tag.LTE, Tag.DIFF};
                 int[] follow = {';', ')', '>', '=', Tag.GTE, '<', Tag.LTE, Tag.DIFF};
                 this.skipTo(expected, follow);
         }
+        
+        return exp;
     }
-
-    public void term() {
+    
+    private Type termTypeVerification(Type type, Expression exp) {
+        Type ret = new Type();
+        
+        if (exp.type.type == Type.NULL) {
+            ret = type;
+        } else {
+            switch(exp.op.op) {
+                case Operation.MUL:
+                case Operation.DIV:
+                    if (type.type == Type.INTEGER && exp.type.type == Type.INTEGER) {
+                        type.type = Type.INTEGER;
+                    } else {
+                        SemanticException se = new SemanticException(Lexer.line, null,
+                                "Operadores aritméticos só se aplicam ao tipo integer.");
+                        se.printError();
+                    }
+                    break;
+                case Operation.AND:
+                    if (type.type == Type.BOOLEAN && exp.type.type == Type.BOOLEAN) {
+                        type.type = Type.BOOLEAN;
+                    } else {
+                        SemanticException se = new SemanticException(Lexer.line, null,
+                            "Operadores lógicos só se aplicam ao tipo boolean.");
+                        se.printError();
+                    }
+                    break;
+            }
+        }
+        
+        return ret;
+    }
+    
+    public Expression term() {
+        Expression exp = new Expression();
+        
         switch (this.token.tag) {
             case Tag.ID:
             case Tag.NUM:
@@ -557,24 +673,30 @@ public class Syntaxer {
             case '(':
             case Tag.NOT:
             case '-':
-                this.factorA();
-                this.termTail();
+                Type type = this.factorA();
+                Expression exp1 = this.termTail();
+                exp.type = this.termTypeVerification(type, exp1);
                 break;
             default:
                 int[] expected = {Tag.ID, Tag.NUM, Tag.STRING, '(', Tag.NOT, '-'};
                 int[] follow = {Tag.OR, '+', '-', ';', ')', '>', '=', Tag.GTE, '<', Tag.LTE, Tag.DIFF};
                 this.skipTo(expected, follow);
         }
+        
+        return exp;
     }
 
-    public void termTail() {
+    public Expression termTail() {
+        Expression exp = new Expression();
+        
         switch (this.token.tag) {
             case '*':
             case '/':
             case Tag.AND:
-                this.mulOp();
-                this.factorA();
-                this.termTail();
+                exp.op = this.mulOp();
+                Type type = this.factorA();
+                Expression exp1 = this.termTail();
+                exp.type = this.termTypeVerification(type, exp1);
                 break;
             case '+':
             case '-':
@@ -587,35 +709,52 @@ public class Syntaxer {
             case '<':
             case Tag.LTE:
             case Tag.DIFF:
+                exp.type.type = Type.NULL;
                 break;
             default:
                 int[] expected = {'*', '/', Tag.AND, Tag.OR, '+', '-', ';', ')', '>', '=', Tag.GTE, '<', Tag.LTE, Tag.DIFF};
                 int[] follow = {Tag.OR, '+', '-', ';', ')', '>', '=', Tag.GTE, '<', Tag.LTE, Tag.DIFF};
                 this.skipTo(expected, follow);
         }
+        
+        return exp;
     }
 
-    public void factorA() {
+    public Type factorA() {
+        Type type = new Type();
+        
         switch (this.token.tag) {
             case Tag.ID:
             case Tag.NUM:
             case Tag.STRING:
             case '(':
-                this.factor();
+                type = this.factor();
                 break;
             case Tag.NOT:
                 this.eat(Tag.NOT);
-                this.factor();
+                type = this.factor();
+                if (type.type != Type.BOOLEAN) {
+                    SemanticException se = new SemanticException(Lexer.line, null,
+                            "Operadores lógicos só se aplicam ao tipo boolean.");
+                    se.printError();
+                }
                 break;
             case '-':
                 this.eat('-');
-                this.factor();
+                type = this.factor();
+                if (type.type != Type.INTEGER) {
+                    SemanticException se = new SemanticException(Lexer.line, null,
+                            "Operadores aritméticos só se aplicam ao tipo integer.");
+                    se.printError();
+                }
                 break;
             default:
                 int[] expected = {Tag.ID, Tag.NUM, Tag.STRING, '(', Tag.NOT, '-'};
                 int[] follow = {'*', '/', Tag.AND, Tag.OR, '+', '-', ';', ')', '>', '=', Tag.GTE, '<', Tag.LTE, Tag.DIFF};
                 this.skipTo(expected, follow);
         }
+        
+        return type;
     }
 
     public Type factor() {
@@ -625,8 +764,9 @@ public class Syntaxer {
             case Tag.ID:
                 type = ((Word) this.token).type;
                 if (type == null) {
-                    //TODO: Excessão semântica, identificador não declarado.
-                    
+                    SemanticException se = new SemanticException(Lexer.line,
+                            this.token, "Identificador '%s' não declarado.");
+                    se.printError();
                 }
                 this.eat(Tag.ID);
                 break;
@@ -640,7 +780,7 @@ public class Syntaxer {
                 break;
             case '(':
                 this.eat('(');
-                type = this.expression();
+                type = this.expression().type;
                 this.eat(')');
                 break;
             default:
@@ -652,24 +792,32 @@ public class Syntaxer {
         return type;
     }
 
-    public void relOp() {
+    public Operation relOp() {
+        Operation op = new Operation();
+
         switch (this.token.tag) {
             case '=':
+                op.op = Operation.EQUAL;
                 this.eat('=');
                 break;
             case '>':
+                op.op = Operation.GT;
                 this.eat('>');
                 break;
             case Tag.GTE:
+                op.op = Operation.GTE;
                 this.eat(Tag.GTE);
                 break;
             case '<':
+                op.op = Operation.LT;
                 this.eat('<');
                 break;
             case Tag.LTE:
+                op.op = Operation.LTE;
                 this.eat(Tag.LTE);
                 break;
             case Tag.DIFF:
+                op.op = Operation.DIFF;
                 this.eat(Tag.DIFF);
                 break;
             default:
@@ -677,17 +825,24 @@ public class Syntaxer {
                 int[] follow = {Tag.ID, Tag.NUM, Tag.STRING, '(', Tag.NOT, '-'};
                 this.skipTo(expected, follow);
         }
+
+        return op;
     }
 
-    public void addOp() {
+    public Operation addOp() {
+        Operation op = new Operation();
+
         switch (this.token.tag) {
             case '+':
+                op.op = Operation.ADD;
                 this.eat('+');
                 break;
             case '-':
+                op.op = Operation.SUB;
                 this.eat('-');
                 break;
             case Tag.OR:
+                op.op = Operation.OR;
                 this.eat(Tag.OR);
                 break;
             default:
@@ -695,17 +850,24 @@ public class Syntaxer {
                 int[] follow = {Tag.ID, Tag.NUM, Tag.STRING, '(', Tag.NOT, '-'};
                 this.skipTo(expected, follow);
         }
+
+        return op;
     }
 
-    public void mulOp() {
+    public Operation mulOp() {
+        Operation op = new Operation();
+
         switch (this.token.tag) {
             case '*':
+                op.op = Operation.MUL;
                 this.eat('*');
                 break;
             case '/':
+                op.op = Operation.DIV;
                 this.eat('/');
                 break;
             case Tag.AND:
+                op.op = Operation.AND;
                 this.eat(Tag.AND);
                 break;
             default:
@@ -713,6 +875,8 @@ public class Syntaxer {
                 int[] follow = {Tag.ID, Tag.NUM, Tag.STRING, '(', Tag.NOT, '-'};
                 this.skipTo(expected, follow);
         }
+
+        return op;
     }
 
     public Type constant() {
