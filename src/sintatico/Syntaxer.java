@@ -6,7 +6,6 @@ import lexico.LexicalException;
 import lexico.Tag;
 import lexico.Token;
 import lexico.Word;
-import semantico.AssignCommand;
 import semantico.Command;
 import semantico.DeclarationCommand;
 import semantico.Expression;
@@ -101,33 +100,9 @@ public class Syntaxer {
 
         switch (this.token.tag) {
             case Tag.ID:
-                Token tk = this.token;
-                Word id;
-                boolean eat = this.eat(Tag.ID);
-                command = this.assignOrDecl();
-                if (command instanceof AssignCommand) { //Atribuíção
-                    AssignCommand ac = (AssignCommand) command;
-                    if (eat) {
-                        id = (Word) this.token;
-                        if (ac.assignType.type == id.type.type) {
-                            command.type = ac.type;
-                        } else {
-                            SemanticException se = new SemanticException(Lexer.line, null,
-                                    "Tipos não compatíveis.");
-                            se.printError();
-                        }
-                    } else {
-                        command.type = ac.type;
-                    }
-                } else { //Declaração
-                    DeclarationCommand dc = (DeclarationCommand) command;
-                    if (eat) {
-                        id = (Word) this.token;
-                        dc.add(id);
-                    }
-                    dc.resolve();
-                    command.type = dc.type;
-                }
+                Word id = (Word) this.token;
+                this.eat(Tag.ID);
+                command = this.assignOrDecl(id);
                 break;
             case Tag.IF:
             case Tag.DO:
@@ -151,28 +126,40 @@ public class Syntaxer {
         return command;
     }
 
-    public Command assignOrDecl() {
+    public Command assignOrDecl(Word id) {
         Command command = new Command();
 
         switch (this.token.tag) {
             case Tag.ATRIB:
                 this.eat(Tag.ATRIB);
                 Expression expr = this.simpleExpr();
+                if (id.type.type == Type.NULL) {
+                    SemanticException se = new SemanticException(Lexer.line, id,
+                            "Identificador %s não declarado.");
+                    se.printError();
+                } else if (id.type.type != expr.type.type) {
+                    SemanticException se = new SemanticException(Lexer.line, null,
+                            "Tipos não compatíveis.");
+                    se.printError();
+                }
                 this.eat(';');
                 Command c1 = this.stmtListTail();
-                command = new AssignCommand(expr.type, c1.type);
+                if (c1.type.type == Type.NULL) {
+                    command.type.type = Type.NULL;
+                }
                 break;
             case ',':
             case Tag.IS:
                 DeclarationCommand dc = this.identListTail();
                 this.eat(Tag.IS);
                 Type type = this.type();
+                dc.add(id);
+                dc.resolve(type);
                 this.eat(';');
                 Command c2 = this.declStmtListTail();
                 if (dc.type.type == Type.NULL && c2.type.type == Type.NULL) {
                     command.type.type = Type.NULL;
                 }
-                command = new DeclarationCommand(command.type, type);
                 break;
             default:
                 int[] expected = {Tag.ATRIB, ',', Tag.IS};
@@ -509,13 +496,22 @@ public class Syntaxer {
 
     public Command readStmt() {
         Command command = new Command();
-        command.type.type = Type.NULL;
 
         switch (this.token.tag) {
             case Tag.READ:
                 this.eat(Tag.READ);
                 this.eat('(');
-                this.eat(Tag.ID);
+                Token tk = this.token;
+                if (this.eat(Tag.ID)) {
+                    Word id = (Word) tk;
+                    if (id.type.type == Type.NULL) {
+                        SemanticException se = new SemanticException(Lexer.line, id,
+                                "Identificador %s não declarado.");
+                        se.printError();
+                    } else {
+                        command.type.type = Type.NULL;
+                    }
+                }
                 this.eat(')');
                 break;
             default:
@@ -749,7 +745,7 @@ public class Syntaxer {
                 case Operation.MUL:
                 case Operation.DIV:
                     if (type.type == Type.INTEGER && exp.type.type == Type.INTEGER) {
-                        type.type = Type.INTEGER;
+                        ret.type = Type.INTEGER;
                     } else {
                         SemanticException se = new SemanticException(Lexer.line, null,
                                 "Operadores aritméticos só se aplicam ao tipo integer.");
@@ -758,7 +754,7 @@ public class Syntaxer {
                     break;
                 case Operation.AND:
                     if (type.type == Type.BOOLEAN && exp.type.type == Type.BOOLEAN) {
-                        type.type = Type.BOOLEAN;
+                        ret.type = Type.BOOLEAN;
                     } else {
                         SemanticException se = new SemanticException(Lexer.line, null,
                                 "Operadores lógicos só se aplicam ao tipo boolean.");
@@ -871,7 +867,7 @@ public class Syntaxer {
         switch (this.token.tag) {
             case Tag.ID:
                 type = ((Word) this.token).type;
-                if (type == null) {
+                if (type.type == Type.NULL) {
                     SemanticException se = new SemanticException(Lexer.line,
                             this.token, "Identificador %s não declarado.");
                     se.printError();

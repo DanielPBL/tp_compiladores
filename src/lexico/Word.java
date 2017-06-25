@@ -6,6 +6,7 @@ public class Word extends Token {
 
     private String lexeme = "";
     public Type type;
+    public boolean reported = false;
 
     public String getLexeme() {
         return this.lexeme;

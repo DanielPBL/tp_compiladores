@@ -27,7 +27,6 @@ public class DeclarationCommand extends Command {
         super();
         this.ids = new LinkedList<>();
         this.type = type;
-        this.idType = idType;
     }
     
     public void add(Word id) {
@@ -38,9 +37,9 @@ public class DeclarationCommand extends Command {
         this.ids.addAll(list);
     }
 
-    public void resolve() {
+    public void resolve(Type idType) {
         this.ids.forEach((id) -> {
-            id.type = this.idType;
+            id.type = idType;
         });
     }
 }

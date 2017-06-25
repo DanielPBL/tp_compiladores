@@ -12,7 +12,7 @@ package semantico;
 public class Type {
 
     public final static int
-            ERROR = 1,
+            ERROR = -1,
             NULL = 0,
             INTEGER = 1,
             STRING = 2,
