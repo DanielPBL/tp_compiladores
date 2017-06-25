@@ -375,7 +375,7 @@ public class Syntaxer {
                 Expression exp = this.simpleExpr();
                 if (id.type.type == Type.NULL) {
                     SemanticException se = new SemanticException(Lexer.line, id,
-                            "Identificador '%s' não declarado.");
+                            "Identificador %s não declarado.");
                     se.printError();
                 } else if (id.type.type != exp.type.type) {
                     SemanticException se = new SemanticException(Lexer.line, null,
@@ -873,7 +873,7 @@ public class Syntaxer {
                 type = ((Word) this.token).type;
                 if (type == null) {
                     SemanticException se = new SemanticException(Lexer.line,
-                            this.token, "Identificador '%s' não declarado.");
+                            this.token, "Identificador %s não declarado.");
                     se.printError();
                 }
                 this.eat(Tag.ID);

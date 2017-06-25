@@ -13,4 +13,8 @@ public class Expression {
 
     public Type type;
     public Operation op;
+    
+    public Expression() {
+        this.type = new Type(Type.ERROR);
+    }
 }

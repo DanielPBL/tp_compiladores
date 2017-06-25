@@ -21,6 +21,7 @@ public class Word extends Token {
     public Word(String lexema, int tag) {
         super(tag);
         this.lexeme = lexema;
+        this.type = new Type(Type.NULL);
     }
 
     @Override

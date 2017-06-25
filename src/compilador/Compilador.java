@@ -2,6 +2,8 @@ package compilador;
 
 import java.io.FileNotFoundException;
 import lexico.Lexer;
+import semantico.Command;
+import semantico.Type;
 import sintatico.Syntaxer;
 
 public class Compilador {
@@ -22,14 +24,14 @@ public class Compilador {
             lexer = new Lexer(args[0]);
             syntaxer = new Syntaxer(lexer);
 
-            syntaxer.program();
-            
-            if (syntaxer.success) {
-                System.out.println("Análise sintática terminada com sucesso.");
+            Command c = syntaxer.program();
+
+            if (syntaxer.success && c.type.type == Type.NULL) {
+                System.out.println("Análise terminada com sucesso.");
             } else {
-                System.out.println("Análise sintática terminada com erro(s).");
+                System.out.println("Análise terminada com erro(s).");
             }
-            
+
         } catch (FileNotFoundException e) {
 
         }
