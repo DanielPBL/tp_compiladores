@@ -591,7 +591,7 @@ public class Syntaxer {
                         type.type = Type.BOOLEAN;
                     } else {
                         SemanticException se = new SemanticException(Lexer.line, null,
-                                "Operadores de igual/desigualdade só se aplicam a tipos igual.");
+                                "Operadores de igual/desigualdade só se aplicam a tipos iguais.");
                         se.printError();
                     }
                     break;
@@ -866,11 +866,13 @@ public class Syntaxer {
 
         switch (this.token.tag) {
             case Tag.ID:
-                type = ((Word) this.token).type;
-                if (type.type == Type.NULL) {
+                Word id = (Word) this.token;
+                if (id.type.type == Type.NULL) {
                     SemanticException se = new SemanticException(Lexer.line,
                             this.token, "Identificador %s não declarado.");
                     se.printError();
+                } else {
+                    type = id.type;
                 }
                 this.eat(Tag.ID);
                 break;

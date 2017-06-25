@@ -1,6 +1,6 @@
 init
 // Programa com if
-	j, k, m is integer;
+	k, m, result is integer;
 	a, j is string;
 
 	read(j);
