@@ -37,7 +37,7 @@ public class SemanticException extends CompilationException {
 
     @Override
     public void printError() {
-        if (print) {
+        if (this.print) {
             System.out.printf("Erro %s na linha %d: %s\n", this.type, this.line, this.msg);
         }
     }
