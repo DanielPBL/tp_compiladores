@@ -566,41 +566,6 @@ public class Syntaxer {
         return exp;
     }
 
-    private Type expressionTypeVerification(Expression exp1, Expression exp2) {
-        Type type = new Type();
-
-        if (exp2.type.type == Type.NULL) {
-            type = exp1.type;
-        } else {
-            switch (exp2.op.op) {
-                case Operation.GT:
-                case Operation.GTE:
-                case Operation.LT:
-                case Operation.LTE:
-                    if (exp1.type.type == Type.INTEGER && exp2.type.type == Type.INTEGER) {
-                        type.type = Type.BOOLEAN;
-                    } else {
-                        SemanticException se = new SemanticException(Lexer.line, null,
-                                "Operadores de comparação de magnitude só se aplicam ao tipo integer.");
-                        se.printError();
-                    }
-                    break;
-                case Operation.EQUAL:
-                case Operation.DIFF:
-                    if (exp1.type.type == exp2.type.type) {
-                        type.type = Type.BOOLEAN;
-                    } else {
-                        SemanticException se = new SemanticException(Lexer.line, null,
-                                "Operadores de igual/desigualdade só se aplicam a tipos iguais.");
-                        se.printError();
-                    }
-                    break;
-            }
-        }
-
-        return type;
-    }
-
     public Expression expression() {
         Expression exp = new Expression();
 
@@ -613,7 +578,7 @@ public class Syntaxer {
             case '-':
                 Expression exp1 = this.simpleExpr();
                 Expression exp2 = this.expressionSuffix();
-                exp.type = this.expressionTypeVerification(exp1, exp2);
+                exp.type = Expression.expressionTypeVerification(exp1, exp2);
                 break;
             default:
                 int[] expected = {Tag.ID, Tag.NUM, Tag.STRING, '(', Tag.NOT, '-'};
@@ -735,38 +700,6 @@ public class Syntaxer {
         return exp;
     }
 
-    private Type termTypeVerification(Type type, Expression exp) {
-        Type ret = new Type();
-
-        if (exp.type.type == Type.NULL) {
-            ret = type;
-        } else {
-            switch (exp.op.op) {
-                case Operation.MUL:
-                case Operation.DIV:
-                    if (type.type == Type.INTEGER && exp.type.type == Type.INTEGER) {
-                        ret.type = Type.INTEGER;
-                    } else {
-                        SemanticException se = new SemanticException(Lexer.line, null,
-                                "Operadores aritméticos só se aplicam ao tipo integer.");
-                        se.printError();
-                    }
-                    break;
-                case Operation.AND:
-                    if (type.type == Type.BOOLEAN && exp.type.type == Type.BOOLEAN) {
-                        ret.type = Type.BOOLEAN;
-                    } else {
-                        SemanticException se = new SemanticException(Lexer.line, null,
-                                "Operadores lógicos só se aplicam ao tipo boolean.");
-                        se.printError();
-                    }
-                    break;
-            }
-        }
-
-        return ret;
-    }
-
     public Expression term() {
         Expression exp = new Expression();
 
@@ -779,7 +712,7 @@ public class Syntaxer {
             case '-':
                 Type type = this.factorA();
                 Expression exp1 = this.termTail();
-                exp.type = this.termTypeVerification(type, exp1);
+                exp.type = Expression.termTypeVerification(type, exp1);
                 break;
             default:
                 int[] expected = {Tag.ID, Tag.NUM, Tag.STRING, '(', Tag.NOT, '-'};
@@ -800,7 +733,7 @@ public class Syntaxer {
                 exp.op = this.mulOp();
                 Type type = this.factorA();
                 Expression exp1 = this.termTail();
-                exp.type = this.termTypeVerification(type, exp1);
+                exp.type = Expression.termTypeVerification(type, exp1);
                 break;
             case '+':
             case '-':
