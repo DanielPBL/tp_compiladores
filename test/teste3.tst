@@ -1,8 +1,8 @@
 { Programa de Teste
 Calculo de idade }
 init
-	cont_ is integer;
-	media, idade, soma_ is integer;
+	cont_, qtd is integer;
+	media, idade, soma, altura is integer;
 
 	cont_ := 5;
 	soma := 0;
