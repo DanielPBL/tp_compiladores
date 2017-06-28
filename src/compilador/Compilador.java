@@ -1,6 +1,7 @@
 package compilador;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import lexico.Lexer;
 import semantico.Command;
 import semantico.Type;
@@ -27,7 +28,15 @@ public class Compilador {
             Command c = syntaxer.program();
 
             if (syntaxer.success && c.type.type == Type.NULL) {
-                System.out.println("Análise terminada com sucesso.");
+                try {
+                    if (args.length > 1) {
+                        syntaxer.code.generate(args[1]);
+                    } else {
+                        syntaxer.code.generate();
+                    }
+                } catch (IOException ex) {
+                    System.out.println("Erro ao gravar o arquivo: " + args[1]);
+                }
             } else {
                 System.out.println("Análise terminada com erro(s).");
             }
@@ -35,7 +44,6 @@ public class Compilador {
         } catch (FileNotFoundException e) {
 
         }
-
     }
 
 }

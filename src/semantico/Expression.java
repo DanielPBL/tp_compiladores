@@ -5,6 +5,9 @@
  */
 package semantico;
 
+import generator.Label;
+import java.util.LinkedList;
+import java.util.List;
 import lexico.Lexer;
 
 /**
@@ -15,9 +18,28 @@ public class Expression {
 
     public Type type;
     public Operation op;
+    
+    public List<Label> trueList;
+    public List<Label> falseList;
 
     public Expression() {
         this.type = new Type(Type.ERROR);
+    }
+    
+    public void addTrueList(Label label) {
+        if (this.trueList == null) {
+            this.trueList = new LinkedList<>();
+        }
+        
+        this.trueList.add(label);
+    }
+    
+    public void falseTrueList(Label label) {
+        if (this.falseList == null) {
+            this.falseList = new LinkedList<>();
+        }
+        
+        this.falseList.add(label);
     }
 
     public static Type termTypeVerification(Type type, Expression exp) {
@@ -78,6 +100,38 @@ public class Expression {
                     } else {
                         SemanticException se = new SemanticException(Lexer.line, null,
                                 "Operadores de igual/desigualdade só se aplicam a tipos iguais.");
+                        se.printError();
+                    }
+                    break;
+            }
+        }
+
+        return type;
+    }
+    
+    public static Type simpleExprTypeVerification(Expression exp1, Expression exp2) {
+        Type type = new Type();
+
+        if (exp2.type.type == Type.NULL) {
+            type = exp1.type;
+        } else {
+            switch (exp2.op.op) {
+                case Operation.ADD:
+                case Operation.SUB:
+                    if (exp1.type.type == Type.INTEGER && exp2.type.type == Type.INTEGER) {
+                        type.type = Type.INTEGER;
+                    } else {
+                        SemanticException se = new SemanticException(Lexer.line, null,
+                                "Operadores aritméticos só se aplicam ao tipo integer.");
+                        se.printError();
+                    }
+                    break;
+                case Operation.OR:
+                    if (exp1.type.type == Type.BOOLEAN && exp2.type.type == Type.BOOLEAN) {
+                        type.type = Type.BOOLEAN;
+                    } else {
+                        SemanticException se = new SemanticException(Lexer.line, null,
+                                "Operadores lógicos só se aplicam ao tipo boolean.");
                         se.printError();
                     }
                     break;

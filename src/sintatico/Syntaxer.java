@@ -1,8 +1,10 @@
 package sintatico;
 
+import generator.Code;
 import java.io.IOException;
 import lexico.Lexer;
 import lexico.LexicalException;
+import lexico.Num;
 import lexico.Tag;
 import lexico.Token;
 import lexico.Word;
@@ -17,12 +19,14 @@ public class Syntaxer {
 
     private final Lexer lexer;
     private Token token;
+    public Code code;
 
     public boolean success = true;
 
     public Syntaxer(Lexer lexer) {
         this.lexer = lexer;
         this.advance();
+        this.code = new Code();
     }
 
     private void advance() {
@@ -82,8 +86,10 @@ public class Syntaxer {
         switch (this.token.tag) {
             case Tag.INIT:
                 this.eat(Tag.INIT);
+                this.code.add("START");
                 command = this.declStmtList();
                 this.eat(Tag.STOP);
+                this.code.add("STOP");
                 this.eat(Tag.EOF);
                 break;
             default:
@@ -156,6 +162,7 @@ public class Syntaxer {
                 dc.add(id);
                 dc.resolve(type);
                 this.eat(';');
+                dc.gen(code);
                 Command c2 = this.declStmtListTail();
                 if (dc.type.type == Type.NULL && c2.type.type == Type.NULL) {
                     command.type.type = Type.NULL;
@@ -509,6 +516,19 @@ public class Syntaxer {
                                 "Identificador %s não declarado.");
                         se.printError();
                     } else {
+                        switch (id.type.type) {
+                            case Type.INTEGER:
+                                code.add("READ");
+                                code.add("ATOI");
+                                code.add("STOREG " + id.offset);
+                                break;
+                            case Type.STRING:
+                                code.add("PUSHG " + id.offset);
+                                code.add("FREE");
+                                code.add("READ");
+                                code.add("STOREG " + id.offset);
+                                break;
+                        }
                         command.type.type = Type.NULL;
                     }
                 }
@@ -532,6 +552,15 @@ public class Syntaxer {
                 this.eat('(');
                 Expression exp = this.writable();
                 if (exp.type.type != Type.ERROR) {
+                    switch (exp.type.type) {
+                        case Type.BOOLEAN:
+                        case Type.INTEGER:
+                            code.add("WRITEI");
+                            break;
+                        case Type.STRING:
+                            code.add("WRITES");
+                            break;
+                    }
                     command.type.type = Type.NULL;
                 }
                 this.eat(')');
@@ -614,38 +643,6 @@ public class Syntaxer {
         return exp;
     }
 
-    private Type SimpleExprTypeVerification(Expression exp1, Expression exp2) {
-        Type type = new Type();
-
-        if (exp2.type.type == Type.NULL) {
-            type = exp1.type;
-        } else {
-            switch (exp2.op.op) {
-                case Operation.ADD:
-                case Operation.SUB:
-                    if (exp1.type.type == Type.INTEGER && exp2.type.type == Type.INTEGER) {
-                        type.type = Type.INTEGER;
-                    } else {
-                        SemanticException se = new SemanticException(Lexer.line, null,
-                                "Operadores aritméticos só se aplicam ao tipo integer.");
-                        se.printError();
-                    }
-                    break;
-                case Operation.OR:
-                    if (exp1.type.type == Type.BOOLEAN && exp2.type.type == Type.BOOLEAN) {
-                        type.type = Type.BOOLEAN;
-                    } else {
-                        SemanticException se = new SemanticException(Lexer.line, null,
-                                "Operadores lógicos só se aplicam ao tipo boolean.");
-                        se.printError();
-                    }
-                    break;
-            }
-        }
-
-        return type;
-    }
-
     public Expression simpleExpr() {
         Expression exp = new Expression();
 
@@ -658,7 +655,7 @@ public class Syntaxer {
             case '-':
                 Expression exp1 = this.term();
                 Expression exp2 = this.simpleExprTail();
-                exp.type = this.SimpleExprTypeVerification(exp1, exp2);
+                exp.type = Expression.simpleExprTypeVerification(exp1, exp2);
                 break;
             default:
                 int[] expected = {Tag.ID, Tag.NUM, Tag.STRING, '(', Tag.NOT, '-'};
@@ -678,8 +675,16 @@ public class Syntaxer {
             case Tag.OR:
                 exp.op = this.addOp();
                 Expression exp1 = this.term();
+                switch (exp.op.op) {
+                    case Operation.ADD:
+                        code.add("ADD");
+                        break;
+                    case Operation.SUB:
+                        code.add("SUB");
+                        break;
+                }
                 Expression exp2 = this.simpleExprTail();
-                exp.type = this.SimpleExprTypeVerification(exp1, exp2);
+                exp.type = Expression.simpleExprTypeVerification(exp1, exp2);
                 break;
             case ';':
             case ')':
@@ -732,6 +737,14 @@ public class Syntaxer {
             case Tag.AND:
                 exp.op = this.mulOp();
                 Type type = this.factorA();
+                switch (exp.op.op) {
+                    case Operation.MUL:
+                        code.add("MUL");
+                        break;
+                    case Operation.DIV:
+                        code.add("DIV");
+                        break;
+                }
                 Expression exp1 = this.termTail();
                 exp.type = Expression.termTypeVerification(type, exp1);
                 break;
@@ -805,16 +818,19 @@ public class Syntaxer {
                             this.token, "Identificador %s não declarado.");
                     se.printError();
                 } else {
+                    code.add("PUSHG " + id.offset);
                     type = id.type;
                 }
                 this.eat(Tag.ID);
                 break;
             case Tag.NUM:
                 type.type = Type.INTEGER;
+                code.add("PUSHI " + ((Num) this.token).getValue());
                 this.eat(Tag.NUM);
                 break;
             case Tag.STRING:
                 type.type = Type.STRING;
+                code.add("PUSHS " + ((Word) this.token).getLexeme());
                 this.eat(Tag.STRING);
                 break;
             case '(':

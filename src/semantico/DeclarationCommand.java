@@ -5,6 +5,7 @@
  */
 package semantico;
 
+import generator.Code;
 import java.util.LinkedList;
 import java.util.List;
 import lexico.Lexer;
@@ -18,7 +19,8 @@ public class DeclarationCommand extends Command {
 
     public final List<Word> ids;
     public Type idType;
-
+    private static int offset = 0;    
+    
     public DeclarationCommand() {
         super();
         this.ids = new LinkedList<>();
@@ -31,6 +33,8 @@ public class DeclarationCommand extends Command {
     }
 
     public void add(Word id) {
+        id.offset = DeclarationCommand.offset;
+        DeclarationCommand.offset++;
         this.ids.add(id);
     }
 
@@ -39,6 +43,8 @@ public class DeclarationCommand extends Command {
     }
 
     public void resolve(Type idType) {
+        this.idType = idType;
+        
         this.ids.forEach((id) -> {
             if (id.type.type != Type.NULL) {
                 SemanticException se = new SemanticException(Lexer.line, id,
@@ -49,5 +55,21 @@ public class DeclarationCommand extends Command {
                 id.type = idType;
             }
         });
+    }
+    
+    public void gen(Code code) {
+        switch (this.idType.type) {
+            case Type.STRING:
+                for (int i = 0; i < this.ids.size(); i++) {
+                    code.add("PUSHS \"\"");
+                }
+                break;
+            case Type.INTEGER:
+                code.add("PUSHN " + this.ids.size());
+                break;
+            default:
+                System.out.println("Algo muito errado ocorreu!!!");
+                System.exit(1);
+        }
     }
 }
