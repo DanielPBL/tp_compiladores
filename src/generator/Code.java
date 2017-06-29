@@ -24,22 +24,17 @@ public class Code {
     private String fileName = "out.vm";
 
     public int add(String inst) {
-        if (label != null) {
-            this.instructions.add(label.label + ": " + inst);
-            this.label = null;
-        } else {
-            this.instructions.add(inst);
-        }
+        this.instructions.add(inst);
         this.PC++;
 
         return this.PC - 1;
     }
 
-    public Label prepareLabel() {
-        if (label == null) {
+    private Label prepareLabel() {
+        if (this.label == null) {
             this.label = Label.nextLabel();
         }
-        
+
         return this.label;
     }
 
@@ -48,20 +43,30 @@ public class Code {
         this.generate();
     }
 
-    public Label getLabel() {
-        return this.label;
+    public String addLabel(Integer pc) {
+        String inst = this.instructions.get(pc);
+        String l;
+        
+        l = this.prepareLabel().label;
+        inst = l + ": " + inst;
+        this.instructions.set(pc, inst);
+        this.label = null;
+        return l;
+
     }
 
-    public void backpatch(List<Integer> list, Label addr) {
+    public void backpatch(List<Integer> list, Integer addr) {
         String inst;
 
         if (list == null) {
             return;
         }
 
+        String label = this.addLabel(addr);
+
         for (Integer pc : list) {
             inst = this.instructions.get(pc);
-            inst = inst + addr.label;
+            inst = inst + label;
             this.instructions.set(pc, inst);
         }
     }

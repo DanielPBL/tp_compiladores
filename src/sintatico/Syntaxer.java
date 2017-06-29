@@ -28,6 +28,7 @@ public class Syntaxer {
         this.lexer = lexer;
         this.advance();
         this.code = new Code();
+        Expression.code = this.code;
     }
 
     private void advance() {
@@ -87,10 +88,12 @@ public class Syntaxer {
         switch (this.token.tag) {
             case Tag.INIT:
                 this.eat(Tag.INIT);
-                this.code.add("START");
+                code.add("START");
                 command = this.declStmtList();
                 this.eat(Tag.STOP);
-                this.code.add("STOP");
+                command.M = code.PC;
+                code.add("STOP");
+                code.backpatch(command.nextList, command.M);
                 this.eat(Tag.EOF);
                 break;
             default:
@@ -115,15 +118,18 @@ public class Syntaxer {
             case Tag.DO:
             case Tag.READ:
             case Tag.WRITE:
-                Command c1;
-                Command c2;
-                c1 = this.stmtNoAssign();
+                Command c1 = this.stmtNoAssign();
                 this.eat(';');
-                c2 = this.stmtListTail();
+                c1.M = code.PC;
+                Command c2 = this.stmtListTail();
                 if (c1.type.type == Type.NULL && c2.type.type == Type.NULL) {
                     command.type.type = Type.NULL;
-                    code.backpatch(c1.nextList, c2.M);
-                    command.nextList = c2.nextList;
+                    if (c1.M < code.PC) {
+                        code.backpatch(c1.nextList, c1.M);
+                        command.nextList = c2.nextList;
+                    } else {
+                        command.nextList = Code.merge(c1.nextList, c2.nextList);
+                    }
                 }
                 break;
             default:
@@ -156,6 +162,7 @@ public class Syntaxer {
                 Command c1 = this.stmtListTail();
                 if (c1.type.type == Type.NULL) {
                     command.type.type = Type.NULL;
+                    command.nextList = c1.nextList;
                 }
                 break;
             case ',':
@@ -170,6 +177,7 @@ public class Syntaxer {
                 Command c2 = this.declStmtListTail();
                 if (dc.type.type == Type.NULL && c2.type.type == Type.NULL) {
                     command.type.type = Type.NULL;
+                    command.nextList = c2.nextList;
                 }
                 break;
             default:
@@ -288,14 +296,18 @@ public class Syntaxer {
             case Tag.DO:
             case Tag.READ:
             case Tag.WRITE:
-                command.M = code.prepareLabel();
                 Command c1 = this.stmt();
                 this.eat(';');
+                c1.M = code.PC;
                 Command c2 = this.stmtListTail();
                 if (c1.type.type == Type.NULL && c2.type.type == Type.NULL) {
                     command.type.type = Type.NULL;
-                    code.backpatch(c1.nextList, c2.M);
-                    command.nextList = c2.nextList;
+                    if (c1.M < code.PC) {
+                        code.backpatch(c1.nextList, c1.M);
+                        command.nextList = c2.nextList;
+                    } else {
+                        command.nextList = Code.merge(c1.nextList, c2.nextList);
+                    }
                 }
                 break;
             default:
@@ -316,20 +328,23 @@ public class Syntaxer {
             case Tag.DO:
             case Tag.READ:
             case Tag.WRITE:
-                command.M = code.prepareLabel();
                 Command c1 = this.stmt();
+                c1.M = code.PC;
                 this.eat(';');
                 Command c2 = this.stmtListTail();
                 if (c1.type.type == Type.NULL && c2.type.type == Type.NULL) {
                     command.type.type = Type.NULL;
-                    code.backpatch(c1.nextList, c2.M);
-                    command.nextList = c2.nextList;
+                    if (c1.M < code.PC) {
+                        code.backpatch(c1.nextList, c1.M);
+                        command.nextList = c2.nextList;
+                    } else {
+                        command.nextList = Code.merge(c1.nextList, c2.nextList);
+                    }
                 }
                 break;
             case Tag.END:
             case Tag.WHILE:
             case Tag.STOP:
-                command.M = code.prepareLabel();
                 command.type.type = Type.NULL;
                 break;
             default:
@@ -409,19 +424,19 @@ public class Syntaxer {
                 this.eat('(');
                 Expression exp = this.condition();
                 this.eat(')');
-                command.M = code.prepareLabel();
+                exp.M = code.PC;
                 this.eat(Tag.BEGIN);
-                Command c2 = this.stmtList();
+                Command c1 = this.stmtList();
                 this.eat(Tag.END);
-                Command c3 = this.ifSuffix();
-                if (exp.type.type == Type.BOOLEAN && c2.type.type == Type.NULL
-                        && c3.type.type == Type.NULL) {
+                Command c2 = this.ifSuffix();
+                if (exp.type.type == Type.BOOLEAN && c1.type.type == Type.NULL
+                        && c2.type.type == Type.NULL) {
                     command.type.type = Type.NULL;
+                    code.backpatch(exp.trueList, exp.M);
+                    code.backpatch(exp.falseList, c2.M);
+                    List<Integer> temp = Code.merge(c1.nextList, c2.N.nextList);
+                    command.nextList = Code.merge(temp, c2.nextList);
                 }
-                code.backpatch(exp.trueList, command.M);
-                code.backpatch(exp.falseList, c3.M);
-                List<Integer> temp = Code.merge(c2.nextList, c3.N.nextList);
-                command.nextList = Code.merge(temp, c3.nextList);
                 break;
             default:
                 int[] expected = {Tag.IF};
@@ -438,13 +453,14 @@ public class Syntaxer {
         switch (this.token.tag) {
             case Tag.ELSE:
                 command.N = new Command();
-                command.N.addDep(code.add("JUMP "));
+                command.N.addDep(code.PC);
+                code.add("JUMP ");
                 this.eat(Tag.ELSE);
+                command.M = code.PC;
                 this.eat(Tag.BEGIN);
-                Command c1 = this.stmtList();
-                command.M = c1.M;
-                command.type = c1.type;
-                command.nextList = c1.nextList;
+                Command c2 = this.stmtList();
+                command.type = c2.type;
+                command.nextList = c2.nextList;
                 this.eat(Tag.END);
                 break;
             case ';':
@@ -489,16 +505,17 @@ public class Syntaxer {
         switch (this.token.tag) {
             case Tag.DO:
                 this.eat(Tag.DO);
-                command.M = code.prepareLabel();
+                command.M = code.PC;
                 Command c1 = this.stmtList();
-                Command c2 = this.doSuffix();
-                if (c1.type.type == Type.NULL && c2.type.type == Type.NULL) {
+                c1.M = code.PC;
+                Expression exp = this.doSuffix();
+                if (c1.type.type == Type.NULL && exp.type.type == Type.BOOLEAN) {
                     command.type.type = Type.NULL;
+                    code.backpatch(c1.nextList, c1.M);
+                    code.backpatch(exp.trueList, command.M);
+                    command.nextList = exp.falseList;
+                    code.add("JUMP " + code.addLabel(c1.M));
                 }
-                code.backpatch(c1.nextList, c2.M);
-                code.backpatch(c2.E.trueList, command.M);
-                command.nextList = c2.E.falseList;
-                //code.add("JUMP " + "")
                 break;
             default:
                 int[] expected = {Tag.DO};
@@ -509,18 +526,14 @@ public class Syntaxer {
         return command;
     }
 
-    public Command doSuffix() {
-        Command command = new Command();
+    public Expression doSuffix() {
+        Expression exp = new Expression();
 
         switch (this.token.tag) {
             case Tag.WHILE:
                 this.eat(Tag.WHILE);
                 this.eat('(');
-                command.M = code.prepareLabel();
-                command.E = this.condition();
-                if (command.E.type.type == Type.BOOLEAN) {
-                    command.type.type = Type.NULL;
-                }
+                exp = this.condition();
                 this.eat(')');
                 break;
             default:
@@ -529,7 +542,7 @@ public class Syntaxer {
                 this.skipTo(expected, follow);
         }
 
-        return command;
+        return exp;
     }
 
     public Command readStmt() {
@@ -635,10 +648,9 @@ public class Syntaxer {
             case Tag.NOT:
             case '-':
                 Expression exp1 = this.simpleExpr();
+                exp1.M = code.PC;
                 Expression exp2 = this.expressionSuffix();
-                exp.type = Expression.expressionTypeVerification(exp1, exp2);
-                exp.trueList = Code.merge(exp1.trueList, exp2.trueList);
-                exp.falseList = Code.merge(exp1.falseList, exp2.falseList);
+                exp = Expression.expressionTypeVerification(exp1, exp2, null);
                 break;
             default:
                 int[] expected = {Tag.ID, Tag.NUM, Tag.STRING, '(', Tag.NOT, '-'};
@@ -662,8 +674,8 @@ public class Syntaxer {
                 exp.op = this.relOp();
                 Expression exp1 = this.simpleExpr();
                 exp.type = exp1.type;
-                exp.trueList = Code.merge(exp.trueList, exp1.trueList);
-                exp.falseList = Code.merge(exp.falseList, exp1.falseList);
+                exp.trueList = exp1.trueList;
+                exp.falseList = exp1.falseList;
                 switch (exp.op.op) {
                     case Operation.GT:
                         code.add("SUP");
@@ -685,11 +697,6 @@ public class Syntaxer {
                         code.add("NOT");
                         break;
                 }
-                code.prepareLabel();
-                code.add("NOT");
-                exp.addTrueList(code.add("JZ "));
-                code.prepareLabel();
-                exp.addFalseList(code.add("JUMP "));
                 break;
             case ')':
                 exp.type.type = Type.NULL;
@@ -714,17 +721,9 @@ public class Syntaxer {
             case Tag.NOT:
             case '-':
                 Expression exp1 = this.term();
-                //exp1.M = code.prepareLabel();
+                exp1.M = code.PC;
                 Expression exp2 = this.simpleExprTail();
-                exp.type = Expression.simpleExprTypeVerification(exp1, exp2);
-                if (exp2.op.op == Operation.AND) {
-                    code.backpatch(exp1.trueList, exp1.M);
-                    exp.trueList = exp2.trueList;
-                    exp.falseList = Code.merge(exp1.falseList, exp2.falseList);
-                } else {
-                    exp.trueList = Code.merge(exp1.trueList, exp2.trueList);
-                    exp.falseList = Code.merge(exp1.falseList, exp2.falseList);
-                }
+                exp = Expression.simpleExprTypeVerification(exp1, exp2, null);
                 break;
             default:
                 int[] expected = {Tag.ID, Tag.NUM, Tag.STRING, '(', Tag.NOT, '-'};
@@ -753,10 +752,9 @@ public class Syntaxer {
                         code.add("SUB");
                         break;
                 }
+                exp1.M = code.PC;
                 Expression exp2 = this.simpleExprTail();
-                exp.type = Expression.simpleExprTypeVerification(exp1, exp2);
-                exp.trueList = Code.merge(exp1.trueList, exp2.trueList);
-                exp.falseList = Code.merge(exp1.falseList, exp2.falseList);
+                exp = Expression.simpleExprTypeVerification(exp1, exp2, exp.op);
                 break;
             case ';':
             case ')':
@@ -788,16 +786,9 @@ public class Syntaxer {
             case Tag.NOT:
             case '-':
                 Expression exp1 = this.factorA();
+                exp1.M = code.PC;
                 Expression exp2 = this.termTail();
-                exp.type = Expression.termTypeVerification(exp1, exp2);
-                if (exp2.op.op == Operation.OR) {
-                    code.backpatch(exp1.falseList, exp1.M);
-                    exp.trueList = Code.merge(exp1.trueList, exp2.trueList);
-                    exp.falseList = exp2.falseList;
-                } else {
-                    exp.trueList = Code.merge(exp1.trueList, exp2.trueList);
-                    exp.falseList = Code.merge(exp1.falseList, exp2.falseList);
-                }
+                exp = Expression.termTypeVerification(exp1, exp2, null);
                 break;
             default:
                 int[] expected = {Tag.ID, Tag.NUM, Tag.STRING, '(', Tag.NOT, '-'};
@@ -826,8 +817,9 @@ public class Syntaxer {
                         code.add("DIV");
                         break;
                 }
+                exp1.M = code.PC;
                 Expression exp2 = this.termTail();
-                exp.type = Expression.termTypeVerification(exp1, exp2);
+                exp = Expression.termTypeVerification(exp1, exp2, exp.op);
                 break;
             case '+':
             case '-':

@@ -5,7 +5,6 @@
  */
 package semantico;
 
-import generator.Label;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -17,9 +16,8 @@ public class Command {
     public Type type;
     public List<Integer> nextList;
     
-    public Label M;
+    public Integer M;
     public Command N;
-    public Expression E;
     
     public Command() {
         this.type = new Type();

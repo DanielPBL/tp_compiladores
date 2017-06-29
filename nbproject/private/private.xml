@@ -5,6 +5,7 @@
         <group>
             <file>file:/home/daniel/Documentos/Compiladores/tp_compiladores/src/sintatico/Syntaxer.java</file>
             <file>file:/home/daniel/Documentos/Compiladores/tp_compiladores/src/semantico/Operation.java</file>
+            <file>file:/home/daniel/Documentos/Compiladores/tp_compiladores/src/lexico/Tag.java</file>
             <file>file:/home/daniel/Documentos/Compiladores/tp_compiladores/src/generator/Label.java</file>
             <file>file:/home/daniel/Documentos/Compiladores/tp_compiladores/src/generator/Code.java</file>
             <file>file:/home/daniel/Documentos/Compiladores/tp_compiladores/src/compilador/Compilador.java</file>

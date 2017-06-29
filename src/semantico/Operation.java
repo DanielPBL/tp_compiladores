@@ -11,7 +11,6 @@ package semantico;
  */
 public class Operation {
     public final static int
-            NULL = -1,
             EQUAL = 0,
             GT = 1,
             GTE = 2,
@@ -25,5 +24,5 @@ public class Operation {
             DIV = 10,
             AND = 11;
     
-    public int op = Operation.NULL;
+    public int op;
 }

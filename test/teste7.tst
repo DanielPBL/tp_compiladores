@@ -9,12 +9,10 @@ init
 
 	iF (a = 0)
     begin
-	   write(A);
        write(" é par");
     end
     ELSE
     begin
-	   write(A);
        write(" é ímpar.");
     end;
 stop

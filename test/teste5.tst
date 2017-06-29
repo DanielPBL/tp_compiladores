@@ -5,7 +5,7 @@ init
 
 	read(j);
 	read(k);
-	m := 1;
+
  	if (j = "ok")
 	begin
 		result := k/m;
