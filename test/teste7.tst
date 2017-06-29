@@ -9,7 +9,7 @@ init
 
 	iF (a = 0)
     begin
-       write(" é par");
+       write(" é par.");
     end
     ELSE
     begin

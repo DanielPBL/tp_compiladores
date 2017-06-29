@@ -62,11 +62,11 @@ public class Code {
             return;
         }
 
-        String label = this.addLabel(addr);
+        String l = this.addLabel(addr);
 
         for (Integer pc : list) {
             inst = this.instructions.get(pc);
-            inst = inst + label;
+            inst = inst + l;
             this.instructions.set(pc, inst);
         }
     }

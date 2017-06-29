@@ -15,6 +15,7 @@ public class Compilador {
     public static void main(String[] args) {
         if (args.length < 1) {
             System.out.println("Argumentos insuficientes.");
+            System.out.println("Utilização: java -jar Compilador.jar [arquivo_entrada] ([arquivo_saida])");
             System.exit(1);
         }
 
