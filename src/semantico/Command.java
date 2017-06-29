@@ -15,17 +15,21 @@ import java.util.List;
  */
 public class Command {
     public Type type;
-    public List<Label> nextList;
+    public List<Integer> nextList;
+    
+    public Label M;
+    public Command N;
+    public Expression E;
     
     public Command() {
         this.type = new Type();
     }
     
-    public void addDep(Label label) {
+    public void addDep(Integer addr) {
         if (this.nextList == null) {
             this.nextList = new LinkedList<>();
         }
         
-        this.nextList.add(label);
+        this.nextList.add(addr);
     }
 }

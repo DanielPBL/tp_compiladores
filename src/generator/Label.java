@@ -19,7 +19,7 @@ public class Label {
     
     public static Label nextLabel() {
         Label label = new Label();
-        label.label = label.label + Label.count + ": ";
+        label.label = label.label + Label.count;
         Label.count++;
         
         return label;

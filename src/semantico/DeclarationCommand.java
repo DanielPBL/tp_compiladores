@@ -60,10 +60,10 @@ public class DeclarationCommand extends Command {
     public void gen(Code code) {
         switch (this.idType.type) {
             case Type.STRING:
-                for (int i = 0; i < this.ids.size(); i++) {
+                /*for (int i = 0; i < this.ids.size(); i++) {
                     code.add("PUSHS \"\"");
                 }
-                break;
+                break;*/
             case Type.INTEGER:
                 code.add("PUSHN " + this.ids.size());
                 break;

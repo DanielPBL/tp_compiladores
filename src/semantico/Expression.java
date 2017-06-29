@@ -19,39 +19,42 @@ public class Expression {
     public Type type;
     public Operation op;
     
-    public List<Label> trueList;
-    public List<Label> falseList;
+    public Label M;
+    
+    public List<Integer> trueList;
+    public List<Integer> falseList;
 
     public Expression() {
         this.type = new Type(Type.ERROR);
+        this.op = new Operation();
     }
     
-    public void addTrueList(Label label) {
+    public void addTrueList(Integer addr) {
         if (this.trueList == null) {
             this.trueList = new LinkedList<>();
         }
         
-        this.trueList.add(label);
+        this.trueList.add(addr);
     }
     
-    public void falseTrueList(Label label) {
+    public void addFalseList(Integer addr) {
         if (this.falseList == null) {
             this.falseList = new LinkedList<>();
         }
         
-        this.falseList.add(label);
+        this.falseList.add(addr);
     }
 
-    public static Type termTypeVerification(Type type, Expression exp) {
+    public static Type termTypeVerification(Expression exp1, Expression exp2) {
         Type ret = new Type();
 
-        if (exp.type.type == Type.NULL) {
-            ret = type;
+        if (exp2.type.type == Type.NULL) {
+            ret = exp1.type;
         } else {
-            switch (exp.op.op) {
+            switch (exp2.op.op) {
                 case Operation.MUL:
                 case Operation.DIV:
-                    if (type.type == Type.INTEGER && exp.type.type == Type.INTEGER) {
+                    if (exp1.type.type == Type.INTEGER && exp2.type.type == Type.INTEGER) {
                         ret.type = Type.INTEGER;
                     } else {
                         SemanticException se = new SemanticException(Lexer.line, null,
@@ -60,7 +63,7 @@ public class Expression {
                     }
                     break;
                 case Operation.AND:
-                    if (type.type == Type.BOOLEAN && exp.type.type == Type.BOOLEAN) {
+                    if (exp1.type.type == Type.BOOLEAN && exp2.type.type == Type.BOOLEAN) {
                         ret.type = Type.BOOLEAN;
                     } else {
                         SemanticException se = new SemanticException(Lexer.line, null,
